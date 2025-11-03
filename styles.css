@@ -123,6 +123,15 @@ body {
 .leave-modal-content .form-group + .form-group {
     margin-top: 12px;
 }
+.leave-modal-content .form-row {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.leave-modal-content .form-group label input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: #667eea;
+}
 
 @keyframes slideDown {
     from {

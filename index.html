@@ -285,7 +285,13 @@
                 <label for="leaveTeam">Team</label>
                 <input type="text" id="leaveTeam" placeholder="VD: FE, ART, ANIM ...">
             </div>
-            <div class="form-row">
+            <div class="form-group">
+                <label for="leaveMultiToggle">
+                    <input type="checkbox" id="leaveMultiToggle" style="margin-right: 8px;">
+                    Nghỉ nhiều ngày
+                </label>
+            </div>
+            <div class="form-row" id="leaveSingleRow">
                 <div class="form-group">
                     <label for="leaveDate">Ngày Nghỉ</label>
                     <input type="date" id="leaveDate">
@@ -306,6 +312,16 @@
                     </select>
                 </div>
             </div>
+            <div class="form-row" id="leaveMultiRow" style="display:none;">
+                <div class="form-group">
+                    <label for="leaveStartDate">Từ ngày</label>
+                    <input type="date" id="leaveStartDate">
+                </div>
+                <div class="form-group">
+                    <label for="leaveEndDate">Đến ngày</label>
+                    <input type="date" id="leaveEndDate">
+                </div>
+            </div>
             <div class="form-group">
                 <label for="leaveReason">Lý do</label>
                 <textarea id="leaveReason" rows="3" placeholder="Nhập lý do nghỉ..."></textarea>
@@ -315,7 +331,6 @@
                 <input type="text" id="leaveNotify" placeholder="VD: @shama026 hoặc @here, @channel ...">
             </div>
             <div class="form-actions">
-                <button type="button" id="leaveSendBtn" class="btn btn-primary">Gửi lên Discord</button>
                 <button type="button" id="leaveCopyBtn" class="btn btn-copy">Copy Text</button>
                 <button type="button" id="leaveCloseBtn" class="btn btn-secondary">Đóng</button>
             </div>

@@ -1198,6 +1198,17 @@ function openLeaveModal() {
     // Default date = today
     const today = new Date();
     document.getElementById('leaveDate').value = toLocalDateInput(today);
+    // Reset multi-day controls
+    const multiToggle = document.getElementById('leaveMultiToggle');
+    const startEl = document.getElementById('leaveStartDate');
+    const endEl = document.getElementById('leaveEndDate');
+    const multiRow = document.getElementById('leaveMultiRow');
+    const singleRow = document.getElementById('leaveSingleRow');
+    if (multiToggle) multiToggle.checked = false;
+    if (startEl) startEl.value = toLocalDateInput(today);
+    if (endEl) endEl.value = toLocalDateInput(today);
+    if (multiRow) multiRow.style.display = 'none';
+    if (singleRow) singleRow.style.display = 'grid';
     document.getElementById('leaveAmount').value = '1';
     document.getElementById('leaveSessionGroup').style.display = 'none';
 }
@@ -1234,15 +1245,18 @@ function onLeaveAmountChange() {
 }
 
 function formatLeaveMessage(payload) {
-    const dateText = formatDateDM(payload.date);
+    const isMulti = !!payload.isMultiDay;
+    const dateText = isMulti
+        ? `${formatDateDM(payload.startDate)} → ${formatDateDM(payload.endDate)}`
+        : formatDateDM(payload.date);
     const isFullDay = payload.amount >= 1;
-    const durationText = isFullDay
-        ? `${payload.amount.toFixed(1)} ngày`
-        : `${payload.amount} (${payload.session})`;
+    const durationText = isMulti
+        ? `từ ${formatDateDM(payload.startDate)} tới ${formatDateDM(payload.endDate)}`
+        : (isFullDay ? `${payload.amount.toFixed(1)} ngày` : `${payload.amount} (${payload.session})`);
     const notifyPrefix = payload.notify ? `${payload.notify} ` : '';
     
     // Header
-    let msg = `${notifyPrefix}Em xin nghỉ (${dateText} - ${durationText}).\n\n`;
+    let msg = `${notifyPrefix}Em xin nghỉ (${durationText}).\n\n`;
     
     // Body (rich, easy to scan)
     msg += `------\n\n`;
@@ -1257,13 +1271,16 @@ function formatLeaveMessage(payload) {
 async function sendLeaveToDiscord() {
     const employee = document.getElementById('leaveEmployee').value.trim();
     const team = document.getElementById('leaveTeam').value.trim();
+    const isMultiDay = document.getElementById('leaveMultiToggle').checked;
     const date = document.getElementById('leaveDate').value;
+    const startDate = document.getElementById('leaveStartDate').value;
+    const endDate = document.getElementById('leaveEndDate').value;
     const amount = parseFloat(document.getElementById('leaveAmount').value || '1');
     const session = document.getElementById('leaveSession').value;
     const reason = document.getElementById('leaveReason').value.trim();
     const notify = document.getElementById('leaveNotify').value.trim();
     
-    if (!employee || !team || !date) {
+    if (!employee || !team || (!isMultiDay && !date) || (isMultiDay && (!startDate || !endDate))) {
         alert('Vui lòng điền đầy đủ: Tên, Team, Ngày nghỉ');
         return;
     }
@@ -1271,7 +1288,9 @@ async function sendLeaveToDiscord() {
     // Save team to localStorage for next time
     localStorage.setItem(LEAVE_TEAM_KEY, team);
     
-    const payload = { employee, team, date, amount, session, reason, notify };
+    const payload = isMultiDay
+        ? { employee, team, isMultiDay: true, startDate, endDate, amount: 1, session: 'Full', reason, notify }
+        : { employee, team, date, amount, session, reason, notify };
     const message = formatLeaveMessage(payload);
     try {
         if (!secrets.LEAVE_WEBHOOK_URL) {
@@ -1294,17 +1313,23 @@ async function sendLeaveToDiscord() {
 async function copyLeaveToClipboard() {
     const employee = document.getElementById('leaveEmployee').value.trim();
     const team = document.getElementById('leaveTeam').value.trim();
+    const isMultiDay = document.getElementById('leaveMultiToggle').checked;
     const date = document.getElementById('leaveDate').value;
+    const startDate = document.getElementById('leaveStartDate').value;
+    const endDate = document.getElementById('leaveEndDate').value;
     const amount = parseFloat(document.getElementById('leaveAmount').value || '1');
     const session = document.getElementById('leaveSession').value;
     const reason = document.getElementById('leaveReason').value.trim();
     const notify = document.getElementById('leaveNotify').value.trim();
     
-    if (!employee || !team || !date) {
+    if (!employee || !team || (!isMultiDay && !date) || (isMultiDay && (!startDate || !endDate))) {
         alert('Vui lòng điền đầy đủ: Tên, Team, Ngày nghỉ');
         return;
     }
-    const message = formatLeaveMessage({ employee, team, date, amount, session, reason, notify });
+    const payload = isMultiDay
+        ? { employee, team, isMultiDay: true, startDate, endDate, amount: 1, session: 'Full', reason, notify }
+        : { employee, team, date, amount, session, reason, notify };
+    const message = formatLeaveMessage(payload);
     try {
         await navigator.clipboard.writeText(message);
         alert('✅ Đã copy nội dung xin nghỉ!');
@@ -1380,8 +1405,30 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('leaveModalBackdrop').addEventListener('click', closeLeaveModal);
     document.getElementById('leaveCloseBtn').addEventListener('click', closeLeaveModal);
     document.getElementById('leaveAmount').addEventListener('change', onLeaveAmountChange);
-    document.getElementById('leaveSendBtn').addEventListener('click', sendLeaveToDiscord);
+    // Không bind nút gửi Discord (đã ẩn/bỏ)
     document.getElementById('leaveCopyBtn').addEventListener('click', copyLeaveToClipboard);
+    // Toggle nghỉ nhiều ngày
+    const leaveMultiToggle = document.getElementById('leaveMultiToggle');
+    if (leaveMultiToggle) {
+        leaveMultiToggle.addEventListener('change', function() {
+            const isMulti = this.checked;
+            const multiRow = document.getElementById('leaveMultiRow');
+            const singleRow = document.getElementById('leaveSingleRow');
+            const sessionGroup = document.getElementById('leaveSessionGroup');
+            const amountEl = document.getElementById('leaveAmount');
+            
+            // Toggle giữa single row và multi row
+            if (singleRow) singleRow.style.display = isMulti ? 'none' : 'grid';
+            if (multiRow) multiRow.style.display = isMulti ? 'grid' : 'none';
+            
+            // Xử lý session group cho single mode
+            if (!isMulti && sessionGroup) {
+                sessionGroup.style.display = (parseFloat((amountEl?.value)||'1') < 1) ? 'block' : 'none';
+            } else if (sessionGroup) {
+                sessionGroup.style.display = 'none';
+            }
+        });
+    }
 });
 
 // Export function để dùng trong HTML
