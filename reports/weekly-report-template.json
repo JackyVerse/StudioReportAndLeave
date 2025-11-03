@@ -1,0 +1,37 @@
+{
+  "weekNumber": 1,
+  "year": 2024,
+  "startDate": "2024-01-01",
+  "endDate": "2024-01-07",
+  "projects": [
+    {
+      "name": "Dự án 1",
+      "completedTasks": [
+        "Hoàn thành task 1",
+        "Hoàn thành task 2"
+      ],
+      "inProgressTasks": [
+        "Đang làm task 1",
+        "Đang làm task 2"
+      ],
+      "plannedTasks": [
+        "Dự kiến làm task 1",
+        "Dự kiến làm task 2"
+      ],
+      "notes": "Ghi chú cho dự án 1..."
+    },
+    {
+      "name": "Dự án 2",
+      "completedTasks": [
+        "Hoàn thành task 1"
+      ],
+      "inProgressTasks": [
+        "Đang làm task 1"
+      ],
+      "plannedTasks": [
+        "Dự kiến làm task 1"
+      ],
+      "notes": "Ghi chú cho dự án 2..."
+    }
+  ]
+}

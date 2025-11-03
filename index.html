@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Report Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Menu Button -->
+    <div class="menu-button" id="menuButton" title="Menu">
+        <span>☰</span>
+    </div>
+    
+    <!-- Menu Dropdown -->
+    <div class="menu-dropdown" id="menuDropdown" style="display: none;">
+        <div class="menu-item" id="toggleThemeBtn">
+            <span class="menu-icon">🌓</span>
+            <span class="menu-text">Dark Mode</span>
+        </div>
+        <div class="menu-divider"></div>
+            <div class="menu-item" id="requestLeaveBtn">
+                <span class="menu-icon">📝</span>
+                <span class="menu-text">Request Leave</span>
+            </div>
+            <div class="menu-divider"></div>
+        <div class="menu-item" id="dailyReportBtn">
+            <span class="menu-icon">📅</span>
+            <span class="menu-text">Daily Report</span>
+        </div>
+        <div class="menu-item menu-item-disabled" id="weeklyReportBtn">
+            <span class="menu-icon">📊</span>
+            <span class="menu-text">Weekly Report</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <header>
+            <h1>📊 Weekly Report Generator</h1>
+            <p>Tạo báo cáo tuần theo dự án và gửi tự động lên Discord Channel</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Weekly Report Form -->
+            <div class="form-section" id="weeklyFormSection">
+                <h2>Tạo Báo Cáo Tuần</h2>
+                <form id="reportForm">
+                    <!-- Thông tin chung -->
+                    <div class="info-section">
+                        <h3>📅 Thông Tin Chung</h3>
+                        <div class="form-group">
+                            <label for="teamName">👥 Team Name:</label>
+                            <input type="text" id="teamName" name="teamName" 
+                                   placeholder="e.g. FE, ART, ANIM, GD, BACKEND..." 
+                                   list="teamSuggestions">
+                            <datalist id="teamSuggestions">
+                                <option value="FE">
+                                <option value="ART">
+                                <option value="ANIM">
+                                <option value="GD">
+                                <option value="BACKEND">
+                                <option value="QA">
+                                <option value="PM">
+                                <option value="DESIGN">
+                            </datalist>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="weekNumber">Số Tuần:</label>
+                                <input type="number" id="weekNumber" name="weekNumber" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="year">Năm:</label>
+                                <input type="number" id="year" name="year" value="2024" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="startDate">Ngày Bắt Đầu:</label>
+                                <input type="date" id="startDate" name="startDate" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="endDate">Ngày Kết Thúc:</label>
+                                <input type="date" id="endDate" name="endDate" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách dự án -->
+                    <div class="projects-section">
+                        <div class="projects-header">
+                            <h3>📁 Dự Án</h3>
+                            <button type="button" id="addProjectBtn" class="btn btn-add">
+                                ➕ Thêm Dự Án
+                            </button>
+                        </div>
+                        
+                        <div id="projectsContainer">
+                            <!-- Projects will be dynamically added here -->
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" id="previewBtn" class="btn btn-secondary">
+                            <span>👁️</span>
+                            <span>Xem Trước</span>
+                        </button>
+                        <button type="button" id="copyTextBtn" class="btn btn-copy">
+                            <span>📋</span>
+                            <span>Copy Text</span>
+                        </button>
+                        <button type="button" id="saveBtn" class="btn btn-primary">
+                            <span>💾</span>
+                            <span>Lưu Report</span>
+                        </button>
+                        <button type="button" id="downloadBtn" class="btn btn-success">
+                            <span>📥</span>
+                            <span>Tải File JSON</span>
+                        </button>
+                        <button type="button" id="newReportBtn" class="btn btn-info" style="display: none;">
+                            <span>➕</span>
+                            <span>New Report</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Daily Report Form -->
+            <div class="form-section" id="dailyFormSection" style="display: none;">
+                <h2>Tạo Báo Cáo Ngày</h2>
+                <form id="dailyReportForm">
+                    <!-- Thông tin chung -->
+                    <div class="info-section">
+                        <h3>📅 Thông Tin Chung</h3>
+                        <div class="form-group">
+                            <label for="dailyTeamName">👥 Team Name:</label>
+                            <input type="text" id="dailyTeamName" name="dailyTeamName" 
+                                   placeholder="e.g. FE, ART, ANIM, GD, BACKEND..." 
+                                   list="teamSuggestions">
+                        </div>
+                        <div class="form-group">
+                            <label for="dailyDate">📅 Date:</label>
+                            <input type="date" id="dailyDate" name="dailyDate" required>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách dự án -->
+                    <div class="projects-section">
+                        <div class="projects-header">
+                            <h3>📁 Dự Án</h3>
+                        </div>
+                        
+                        <div id="dailyProjectsContainer">
+                            <!-- Daily Projects will be dynamically added here -->
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" id="dailyPreviewBtn" class="btn btn-secondary">
+                            <span>👁️</span>
+                            <span>Xem Trước</span>
+                        </button>
+                        <button type="button" id="dailyCopyTextBtn" class="btn btn-copy">
+                            <span>📋</span>
+                            <span>Copy Text</span>
+                        </button>
+                        <button type="button" id="dailySaveBtn" class="btn btn-primary">
+                            <span>💾</span>
+                            <span>Lưu Report</span>
+                        </button>
+                        <button type="button" id="dailyDownloadBtn" class="btn btn-success">
+                            <span>📥</span>
+                            <span>Tải File JSON</span>
+                        </button>
+                        <button type="button" id="dailyNewReportBtn" class="btn btn-info" style="display: none;">
+                            <span>➕</span>
+                            <span>New Report</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="preview-section" id="previewSection" style="display: none;">
+                <h2>Xem Trước Report</h2>
+                <div class="preview-content" id="previewContent"></div>
+                <div class="preview-actions">
+                    <button type="button" id="copyPreviewBtn" class="btn btn-copy">
+                        <span>📋</span>
+                        <span>Copy Text</span>
+                    </button>
+                    <button type="button" id="closePreview" class="btn btn-secondary">Đóng</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="reports-list">
+            <h2>📚 Danh Sách Reports Đã Lưu</h2>
+            <div id="reportsList" class="reports-grid"></div>
+        </div>
+    </div>
+
+    <!-- Template cho daily project card -->
+    <template id="dailyProjectTemplate">
+        <div class="project-card" data-daily-project-id="">
+            <div class="project-header">
+                <span class="project-number-badge">1</span>
+                <div class="project-name-group">
+                    <input type="text" class="daily-project-id" placeholder="Project ID...">
+                    <input type="text" class="daily-project-name" placeholder="Project Name...">
+                </div>
+                <button type="button" class="btn-remove-project" title="Remove project">🗑️</button>
+            </div>
+            <div class="project-content">
+                <div class="form-group">
+                    <label>✅ DONE:</label>
+                    <textarea class="daily-project-done" rows="4" 
+                              placeholder="Enter completed tasks, one task per line..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>🔄 IN-PROGRESS:</label>
+                    <textarea class="daily-project-in-progress" rows="4"
+                              placeholder="Enter tasks in progress, one task per line..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>📋 REMAINING:</label>
+                    <textarea class="daily-project-remaining" rows="4"
+                              placeholder="Enter remaining tasks, one task per line..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>📝 NOTE:</label>
+                    <textarea class="daily-project-note" rows="3"
+                              placeholder="Enter notes..."></textarea>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Template cho weekly project card -->
+    <template id="projectTemplate">
+        <div class="project-card" data-project-id="">
+            <div class="project-header">
+                <span class="project-number-badge">1</span>
+                <div class="project-name-group">
+                    <input type="text" class="project-id" placeholder="Project ID...">
+                    <input type="text" class="project-name" placeholder="Project Name...">
+                </div>
+                <button type="button" class="btn-remove-project" title="Remove project">🗑️</button>
+            </div>
+            <div class="project-content">
+                <div class="form-group">
+                    <label>✅ Completed Tasks:</label>
+                    <textarea class="project-completed" rows="4" 
+                              placeholder="Enter completed tasks, one task per line..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>🔄 In Progress Tasks:</label>
+                    <textarea class="project-in-progress" rows="4"
+                              placeholder="Enter tasks in progress, one task per line..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>📋 Planned Tasks:</label>
+                    <textarea class="project-planned" rows="4"
+                              placeholder="Enter planned tasks, one task per line..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>📝 Notes / Blockers:</label>
+                    <textarea class="project-notes" rows="3"
+                              placeholder="Enter notes, blockers or issues to note..."></textarea>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Leave Request Modal -->
+    <div id="leaveModal" class="leave-modal" style="display: none;">
+        <div class="leave-modal-backdrop" id="leaveModalBackdrop"></div>
+        <div class="leave-modal-content">
+            <h3>📝 Request Leave</h3>
+            <div class="form-group">
+                <label for="leaveEmployee">Tên Nhân Viên</label>
+                <input type="text" id="leaveEmployee" placeholder="Nhập tên nhân viên...">
+            </div>
+            <div class="form-group">
+                <label for="leaveTeam">Team</label>
+                <input type="text" id="leaveTeam" placeholder="VD: FE, ART, ANIM ...">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="leaveDate">Ngày Nghỉ</label>
+                    <input type="date" id="leaveDate">
+                </div>
+                <div class="form-group">
+                    <label for="leaveAmount">Số ngày</label>
+                    <select id="leaveAmount">
+                        <option value="1">1.0</option>
+                        <option value="0.5">0.5</option>
+                        <option value="0.25">0.25</option>
+                    </select>
+                </div>
+                <div class="form-group" id="leaveSessionGroup" style="display:none;">
+                    <label for="leaveSession">Buổi</label>
+                    <select id="leaveSession">
+                        <option value="Morning">Sáng</option>
+                        <option value="Afternoon">Chiều</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="leaveReason">Lý do</label>
+                <textarea id="leaveReason" rows="3" placeholder="Nhập lý do nghỉ..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="leaveNotify">Notify (tùy chọn)</label>
+                <input type="text" id="leaveNotify" placeholder="VD: @shama026 hoặc @here, @channel ...">
+            </div>
+            <div class="form-actions">
+                <button type="button" id="leaveSendBtn" class="btn btn-primary">Gửi lên Discord</button>
+                <button type="button" id="leaveCopyBtn" class="btn btn-copy">Copy Text</button>
+                <button type="button" id="leaveCloseBtn" class="btn btn-secondary">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

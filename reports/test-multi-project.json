@@ -1,0 +1,56 @@
+{
+  "weekNumber": 52,
+  "year": 2024,
+  "startDate": "2024-12-23",
+  "endDate": "2024-12-29",
+  "projects": [
+    {
+      "name": "Project A - Website Redesign",
+      "completedTasks": [
+        "Hoàn thành thiết kế UI/UX",
+        "Implement responsive design",
+        "Fix bug navigation menu"
+      ],
+      "inProgressTasks": [
+        "Tối ưu performance",
+        "Viết unit tests"
+      ],
+      "plannedTasks": [
+        "Deploy staging environment",
+        "Code review"
+      ],
+      "notes": "Đang chờ feedback từ client về màu sắc"
+    },
+    {
+      "name": "Project B - Mobile App",
+      "completedTasks": [
+        "Setup development environment",
+        "Tạo base structure"
+      ],
+      "inProgressTasks": [
+        "Implement authentication",
+        "Design database schema"
+      ],
+      "plannedTasks": [
+        "API integration",
+        "UI components"
+      ],
+      "notes": "Cần sync với backend team về API specs"
+    },
+    {
+      "name": "Project C - Analytics Dashboard",
+      "completedTasks": [
+        "Research analytics tools",
+        "Create wireframes"
+      ],
+      "inProgressTasks": [
+        "Data visualization components"
+      ],
+      "plannedTasks": [
+        "Real-time data integration",
+        "User permissions"
+      ],
+      "notes": ""
+    }
+  ]
+}
