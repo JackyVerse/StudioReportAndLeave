@@ -381,9 +381,10 @@ def main():
         success = send_to_backend_api(api_base_url, message, report_type='weekly')
     else:
         # Fallback: gửi trực tiếp webhook nếu chưa có backend
-        webhook_url = os.getenv('DISCORD_WEBHOOK_URL')
+        # Ưu tiên biến mới WEEKLY_REPORT_WEBHOOK_URL; fallback DISCORD_WEBHOOK_URL để không phá vỡ cấu hình cũ
+        webhook_url = os.getenv('WEEKLY_REPORT_WEBHOOK_URL') or os.getenv('DISCORD_WEBHOOK_URL')
         if not webhook_url:
-            print("❌ Chưa cấu hình REPORT_API_BASE_URL hoặc DISCORD_WEBHOOK_URL")
+            print("❌ Chưa cấu hình REPORT_API_BASE_URL hoặc WEEKLY_REPORT_WEBHOOK_URL/DISCORD_WEBHOOK_URL")
             print("   Khuyến nghị dùng REPORT_API_BASE_URL để ẩn webhook ở server.")
             sys.exit(1)
         print("🚀 Đang gửi trực tiếp lên Discord (fallback)...")

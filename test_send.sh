@@ -23,9 +23,10 @@ echo "📖 Đang đọc report từ: $REPORT_FILE"
 echo "🚀 Đang gửi..."
 echo ""
 
-# Ưu tiên dùng Backend API: set REPORT_API_BASE_URL trước khi chạy
-# Ví dụ:
-# export REPORT_API_BASE_URL="https://leave.yourdomain.tld"
+# Ưu tiên Backend API: set REPORT_API_BASE_URL trước khi chạy
+#   export REPORT_API_BASE_URL="https://leave.yourdomain.tld"
+# Fallback webhook: WEEKLY_REPORT_WEBHOOK_URL hoặc DISCORD_WEBHOOK_URL
+#   export WEEKLY_REPORT_WEBHOOK_URL="https://discord.com/api/webhooks/..."
 
 # Sử dụng venv nếu có
 if [ -d "venv" ]; then

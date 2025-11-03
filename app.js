@@ -166,9 +166,8 @@ function resetFormToNew() {
     const newReportBtn = document.getElementById('newReportBtn');
     newReportBtn.style.display = 'none';
     
-    // Set lại default dates
-    // Only set default weekly dates when in weekly mode
-    if (savedMode === 'weekly') {
+    // Set lại default dates (chỉ áp dụng cho weekly)
+    if (currentReportMode === 'weekly') {
         setDefaultDates();
     }
 }
@@ -1185,9 +1184,9 @@ document.addEventListener('click', function(event) {
 // ==================== END MENU & THEME MANAGEMENT ====================
 
 // ==================== LEAVE REQUEST ====================
-// Backend API endpoint (replace with your server URL when ready)
-const API_BASE_URL = '/'; // same-origin by default
-const LEAVE_API_ENDPOINT = 'api/leave';
+// Gửi trực tiếp tới Discord Webhook cho Leave (theo yêu cầu)
+// Cập nhật URL webhook bên dưới bằng webhook của Leave channel
+const LEAVE_WEBHOOK_URL = '';
 
 const LEAVE_TEAM_KEY = 'leave_team_default';
 
@@ -1274,17 +1273,22 @@ async function sendLeaveToDiscord() {
     localStorage.setItem(LEAVE_TEAM_KEY, team);
     
     const payload = { employee, team, date, amount, session, reason, notify };
+    const message = formatLeaveMessage(payload);
     try {
-        const res = await fetch((API_BASE_URL.endsWith('/') ? API_BASE_URL : API_BASE_URL + '/') + LEAVE_API_ENDPOINT, {
+        if (!LEAVE_WEBHOOK_URL) {
+            alert('❌ LEAVE_WEBHOOK_URL chưa được cấu hình trong app.js');
+            return;
+        }
+        const res = await fetch(LEAVE_WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ content: message, username: 'Leave Bot' })
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         alert('✅ Đã gửi yêu cầu nghỉ phép!');
         closeLeaveModal();
     } catch (e) {
-        alert('❌ Gửi thất bại. Vui lòng kiểm tra server API và thử lại.');
+        alert('❌ Gửi thất bại. Vui lòng kiểm tra LEAVE_WEBHOOK_URL và thử lại.');
     }
 }
 
