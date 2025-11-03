@@ -1185,8 +1185,7 @@ document.addEventListener('click', function(event) {
 
 // ==================== LEAVE REQUEST ====================
 // Gửi trực tiếp tới Discord Webhook cho Leave (theo yêu cầu)
-// Cập nhật URL webhook bên dưới bằng webhook của Leave channel
-const LEAVE_WEBHOOK_URL = '';
+// Cập nhật URL webhook bên dưới bằng webhook của Leave channel (sử dụng secrets)
 
 const LEAVE_TEAM_KEY = 'leave_team_default';
 
@@ -1275,11 +1274,11 @@ async function sendLeaveToDiscord() {
     const payload = { employee, team, date, amount, session, reason, notify };
     const message = formatLeaveMessage(payload);
     try {
-        if (!LEAVE_WEBHOOK_URL) {
+        if (!secrets.LEAVE_WEBHOOK_URL) {
             alert('❌ LEAVE_WEBHOOK_URL chưa được cấu hình trong app.js');
             return;
         }
-        const res = await fetch(LEAVE_WEBHOOK_URL, {
+        const res = await fetch(secrets.LEAVE_WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content: message, username: 'Leave Bot' })
