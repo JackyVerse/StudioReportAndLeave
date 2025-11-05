@@ -5,8 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weekly Report Generator</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen" style="display: none;">
+        <div class="login-container">
+            <div class="login-content">
+                <h1>🔐 Studio Report & Leave</h1>
+                <p class="login-subtitle">Vui lòng đăng nhập bằng tài khoản Google</p>
+                <p class="login-note">⚠️ Chỉ cho phép email có đuôi <strong>@seatudio.com</strong></p>
+                <div id="g_id_onload"
+                     data-client_id=""
+                     data-callback="handleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin" 
+                     data-type="standard"
+                     data-size="large"
+                     data-theme="outline"
+                     data-text="sign_in_with"
+                     data-shape="rectangular"
+                     data-logo_alignment="left">
+                </div>
+                <div id="loginError" class="login-error" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main App (hidden until authenticated) -->
+    <div id="mainApp" style="display: none;">
     <!-- Menu Button -->
     <div class="menu-button" id="menuButton" title="Menu">
         <span>☰</span>
@@ -50,19 +78,9 @@
                         <h3>📅 Thông Tin Chung</h3>
                         <div class="form-group">
                             <label for="teamName">👥 Team Name:</label>
-                            <input type="text" id="teamName" name="teamName" 
-                                   placeholder="e.g. FE, ART, ANIM, GD, BACKEND..." 
-                                   list="teamSuggestions">
-                            <datalist id="teamSuggestions">
-                                <option value="FE">
-                                <option value="ART">
-                                <option value="ANIM">
-                                <option value="GD">
-                                <option value="BACKEND">
-                                <option value="QA">
-                                <option value="PM">
-                                <option value="DESIGN">
-                            </datalist>
+                            <select id="teamName" name="teamName">
+                                <option value="">-- Chọn Team --</option>
+                            </select>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -91,9 +109,14 @@
                     <div class="projects-section">
                         <div class="projects-header">
                             <h3>📁 Dự Án</h3>
-                            <button type="button" id="addProjectBtn" class="btn btn-add">
-                                ➕ Thêm Dự Án
-                            </button>
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" id="projectSettingsBtn" class="btn btn-secondary" style="flex: 0 0 auto;">
+                                    ⚙️ Setting
+                                </button>
+                                <button type="button" id="addProjectBtn" class="btn btn-add">
+                                    ➕ Thêm Dự Án
+                                </button>
+                            </div>
                         </div>
                         
                         <div id="projectsContainer">
@@ -135,9 +158,9 @@
                         <h3>📅 Thông Tin Chung</h3>
                         <div class="form-group">
                             <label for="dailyTeamName">👥 Team Name:</label>
-                            <input type="text" id="dailyTeamName" name="dailyTeamName" 
-                                   placeholder="e.g. FE, ART, ANIM, GD, BACKEND..." 
-                                   list="teamSuggestions">
+                            <select id="dailyTeamName" name="dailyTeamName">
+                                <option value="">-- Chọn Team --</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="dailyDate">📅 Date:</label>
@@ -149,6 +172,9 @@
                     <div class="projects-section">
                         <div class="projects-header">
                             <h3>📁 Dự Án</h3>
+                            <button type="button" id="dailyProjectSettingsBtn" class="btn btn-secondary" style="flex: 0 0 auto;">
+                                ⚙️ Setting
+                            </button>
                         </div>
                         
                         <div id="dailyProjectsContainer">
@@ -206,8 +232,10 @@
             <div class="project-header">
                 <span class="project-number-badge">1</span>
                 <div class="project-name-group">
-                    <input type="text" class="daily-project-id" placeholder="Project ID...">
-                    <input type="text" class="daily-project-name" placeholder="Project Name...">
+                    <select class="daily-project-id" placeholder="Project ID...">
+                        <option value="">-- Chọn Project --</option>
+                    </select>
+                    <input type="text" class="daily-project-name" placeholder="Project Name..." readonly>
                 </div>
                 <button type="button" class="btn-remove-project" title="Remove project">🗑️</button>
             </div>
@@ -242,8 +270,10 @@
             <div class="project-header">
                 <span class="project-number-badge">1</span>
                 <div class="project-name-group">
-                    <input type="text" class="project-id" placeholder="Project ID...">
-                    <input type="text" class="project-name" placeholder="Project Name...">
+                    <select class="project-id" placeholder="Project ID...">
+                        <option value="">-- Chọn Project --</option>
+                    </select>
+                    <input type="text" class="project-name" placeholder="Project Name..." readonly>
                 </div>
                 <button type="button" class="btn-remove-project" title="Remove project">🗑️</button>
             </div>
@@ -283,7 +313,9 @@
             </div>
             <div class="form-group">
                 <label for="leaveTeam">Team</label>
-                <input type="text" id="leaveTeam" placeholder="VD: FE, ART, ANIM ...">
+                <select id="leaveTeam">
+                    <option value="">-- Chọn Team --</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="leaveMultiToggle">
@@ -337,6 +369,52 @@
         </div>
     </div>
 
+    </div> <!-- End mainApp -->
+    
+    <!-- Project Settings Modal -->
+    <div id="projectSettingsModal" class="leave-modal" style="display: none;">
+        <div class="leave-modal-backdrop" id="projectSettingsBackdrop"></div>
+        <div class="leave-modal-content" style="max-width: 1000px; width: 95%;">
+            <h3>⚙️ Quản Lý Dự Án</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.95em;">
+                Quản lý thông tin dự án của bạn. Các dự án này sẽ được lưu trong trình duyệt và chỉ hiển thị trên máy của bạn.
+            </p>
+            
+            <!-- Form thêm project mới -->
+            <div style="background: var(--bg-tertiary); border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 2px solid var(--border-color);">
+                <h4 style="color: var(--text-primary); margin-bottom: 15px; font-size: 1.1em;">➕ Thêm Dự Án Mới</h4>
+                <div id="newProjectsList">
+                    <!-- Danh sách input để thêm project mới -->
+                </div>
+                <div style="margin-top: 15px;">
+                    <button type="button" id="addNewProjectRowBtn" class="btn btn-secondary" style="width: auto; min-width: 150px; margin-right: 10px;">
+                        ➕ Thêm Dòng
+                    </button>
+                    <button type="button" id="saveNewProjectsBtn" class="btn btn-primary" style="width: auto; min-width: 150px;">
+                        💾 Lưu Dự Án
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Danh sách projects đã lưu -->
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: var(--text-primary); margin-bottom: 15px; font-size: 1.1em;">📁 Dự Án Đã Lưu</h4>
+                <div id="projectSettingsList" style="max-height: 450px; overflow-y: auto; padding-right: 5px;">
+                    <!-- Danh sách projects sẽ được load ở đây -->
+                </div>
+            </div>
+            
+            <div class="form-actions" style="margin-top: 20px;">
+                <button type="button" id="projectSettingsCloseBtn" class="btn btn-secondary">Đóng</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+    
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

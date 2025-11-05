@@ -272,7 +272,8 @@ header p {
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
     width: 100%;
     padding: 14px 16px;
     border: 2px solid var(--border-color);
@@ -285,7 +286,8 @@ header p {
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
     outline: none;
     border-color: #667eea;
     background: var(--bg-secondary);
@@ -293,8 +295,15 @@ header p {
 }
 
 .form-group input:hover,
-.form-group textarea:hover {
+.form-group textarea:hover,
+.form-group select:hover {
     border-color: #d0d0d0;
+}
+
+.form-group input[readonly] {
+    background: var(--bg-secondary);
+    cursor: default;
+    opacity: 0.8;
 }
 
 .form-group textarea {
@@ -900,5 +909,308 @@ header p {
     .preview-section h2,
     .reports-list h2 {
         font-size: 1.5em;
+    }
+}
+
+/* ==================== LOGIN SCREEN ==================== */
+.login-screen {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+    min-height: 100vh;
+    overflow-y: auto;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+}
+
+.login-content {
+    background: var(--bg-secondary);
+    border-radius: 24px;
+    padding: 50px 40px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    width: 100%;
+    max-width: 100%;
+    position: relative;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-content h1 {
+    color: #667eea;
+    margin-bottom: 16px;
+    font-size: 2.2em;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.login-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    font-size: 1.05em;
+    line-height: 1.6;
+}
+
+.login-note {
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+    font-size: 0.95em;
+    padding: 16px 20px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+    line-height: 1.6;
+    text-align: left;
+}
+
+.login-note strong {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.login-error {
+    margin-top: 24px;
+    padding: 16px 20px;
+    background: #ffebee;
+    border: 2px solid #f44336;
+    border-radius: 12px;
+    color: #c62828;
+    font-weight: 600;
+    font-size: 0.95em;
+    line-height: 1.6;
+    text-align: left;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+/* Google Sign-In button container */
+#g_id_signin {
+    margin: 28px auto 0;
+    display: flex;
+    justify-content: center;
+    min-height: 50px;
+}
+
+/* Responsive cho login screen */
+@media (max-width: 640px) {
+    .login-screen {
+        padding: 15px;
+    }
+    
+    .login-content {
+        padding: 40px 30px;
+        border-radius: 20px;
+    }
+    
+    .login-content h1 {
+        font-size: 1.8em;
+    }
+    
+    .login-subtitle {
+        font-size: 1em;
+    }
+    
+    .login-note {
+        font-size: 0.9em;
+        padding: 14px 16px;
+    }
+}
+
+body.dark-mode .login-screen {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+body.dark-mode .login-content {
+    background: var(--bg-secondary);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode .login-note {
+    background: rgba(102, 126, 234, 0.15);
+    border-left-color: #667eea;
+}
+
+body.dark-mode .login-error {
+    background: rgba(244, 67, 54, 0.15);
+    border-color: #f44336;
+    color: #ffcdd2;
+}
+
+/* ==================== PROJECT SETTINGS MODAL ==================== */
+#projectSettingsModal .leave-modal-content {
+    max-width: 1000px;
+    width: 95%;
+    padding: 30px;
+}
+
+/* ==================== TOASTS ==================== */
+.toast-container {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.toast {
+    min-width: 260px;
+    max-width: 360px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: toast-in 220ms ease-out forwards;
+}
+
+.toast.success { border-left: 4px solid #28a745; }
+.toast.error { border-left: 4px solid #dc3545; }
+.toast.info { border-left: 4px solid #667eea; }
+
+.toast .toast-icon { font-size: 18px; }
+.toast .toast-text { font-size: 14px; line-height: 1.35; }
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toast-out {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(10px); }
+}
+
+#newProjectsList .new-project-row input,
+.project-setting-item input {
+    transition: all 0.3s ease;
+}
+
+#projectSettingsList {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--bg-tertiary);
+}
+
+#projectSettingsList::-webkit-scrollbar {
+    width: 8px;
+}
+
+#projectSettingsList::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+}
+
+#projectSettingsList::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+#projectSettingsList::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+}
+
+#newProjectsList .new-project-row input:focus,
+.project-setting-item input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-remove-new-project:hover,
+.btn-save-project:hover,
+.btn-delete-project:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-save-project {
+    transition: all 0.3s ease;
+}
+
+.btn-save-project:hover {
+    background: #218838 !important;
+}
+
+.btn-delete-project {
+    transition: all 0.3s ease;
+}
+
+.btn-delete-project:hover {
+    background: #c82333 !important;
+}
+
+/* Responsive cho project settings */
+@media (max-width: 968px) {
+    #newProjectsList .new-project-row,
+    .project-setting-item > div {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+    
+    .project-setting-item > div > div:last-child {
+        justify-content: flex-start !important;
+        min-width: auto !important;
+    }
+    
+    .btn-remove-new-project,
+    .btn-save-project,
+    .btn-delete-project {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    #projectSettingsModal .leave-modal-content {
+        max-width: 95vw;
+        padding: 20px;
+    }
+    
+    #newProjectsList .new-project-row,
+    .project-setting-item > div {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+    
+    .btn-remove-new-project,
+    .btn-save-project,
+    .btn-delete-project {
+        width: 100%;
     }
 }

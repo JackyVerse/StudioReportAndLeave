@@ -1,7 +1,688 @@
 // Lưu reports vào localStorage
 const REPORTS_KEY = 'weekly_reports';
+const TEAM_ID_KEY = 'selected_team_id';
+const USER_PROJECTS_KEY = 'user_projects'; // Lưu projects của user trong localStorage
 let projectCounter = 0;
 let dailyProjectCounter = 0;
+
+// ==================== TOAST UTILS ====================
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return alert(message); // Fallback nếu thiếu container
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icon = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️');
+    toast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-text">${message}</span>`;
+
+    container.appendChild(toast);
+
+    // Auto dismiss
+    const remove = () => {
+        toast.style.animation = 'toast-out 180ms ease-in forwards';
+        setTimeout(() => toast.remove(), 200);
+    };
+    setTimeout(remove, 2500);
+
+    // Dismiss on click
+    toast.addEventListener('click', remove);
+}
+
+// ==================== CONFIG & DROPDOWN MANAGEMENT ====================
+
+// Populate team dropdown từ config
+function populateTeamDropdowns() {
+    if (!APP_CONFIG || !APP_CONFIG.teams) return;
+    
+    const teamSelects = [
+        document.getElementById('teamName'),
+        document.getElementById('dailyTeamName'),
+        document.getElementById('leaveTeam')
+    ];
+    
+    teamSelects.forEach(select => {
+        if (!select) return;
+        
+        // Clear existing options (giữ lại option đầu tiên)
+        while (select.options.length > 1) {
+            select.remove(1);
+        }
+        
+        // Add teams từ config
+        APP_CONFIG.teams.forEach(team => {
+            const option = document.createElement('option');
+            option.value = team.id;
+            option.textContent = `${team.id} - ${team.name}`;
+            select.appendChild(option);
+        });
+    });
+}
+
+// Lấy tất cả projects (chỉ từ localStorage)
+function getAllProjects(teamId) {
+    const userProjects = getUserProjects();
+    if (!userProjects || userProjects.length === 0) {
+        return [];
+    }
+    
+    // Nếu có teamId, chỉ lấy projects của team đó hoặc không có teamId
+    if (teamId) {
+        return userProjects.filter(p => !p.teamId || p.teamId === teamId);
+    }
+    
+    return userProjects;
+}
+
+// Populate project dropdown dựa trên team đã chọn
+function populateProjectDropdown(projectSelect, teamId) {
+    if (!projectSelect) return;
+    
+    // Clear existing options (giữ lại option đầu tiên)
+    while (projectSelect.options.length > 1) {
+        projectSelect.remove(1);
+    }
+    
+    // Lấy tất cả projects (từ config + localStorage)
+    const projects = getAllProjects(teamId);
+    
+    // Add projects
+    projects.forEach(project => {
+        const option = document.createElement('option');
+        option.value = project.id;
+        option.textContent = `${project.id} - ${project.name}`;
+        projectSelect.appendChild(option);
+    });
+}
+
+// Populate tất cả project dropdowns dựa trên team hiện tại
+function populateAllProjectDropdowns(teamId) {
+    const teamSelect = document.getElementById('teamName');
+    const dailyTeamSelect = document.getElementById('dailyTeamName');
+    
+    // Weekly projects
+    if (teamSelect && teamSelect.value) {
+        const projectSelects = document.querySelectorAll('.project-id:not(.daily-project-id)');
+        projectSelects.forEach(select => {
+            populateProjectDropdown(select, teamSelect.value);
+        });
+    }
+    
+    // Daily projects
+    if (dailyTeamSelect && dailyTeamSelect.value) {
+        const dailyProjectSelects = document.querySelectorAll('.daily-project-id');
+        dailyProjectSelects.forEach(select => {
+            populateProjectDropdown(select, dailyTeamSelect.value);
+        });
+    }
+}
+
+// Auto-fill project name khi chọn project ID
+function setupProjectIdChangeListeners() {
+    // Weekly projects
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('project-id')) {
+            const projectId = e.target.value;
+            const projectCard = e.target.closest('.project-card');
+            const projectNameInput = projectCard.querySelector('.project-name');
+            
+            if (projectNameInput && projectId) {
+                const projectName = getProjectNameById(projectId);
+                projectNameInput.value = projectName || '';
+            } else if (projectNameInput) {
+                projectNameInput.value = '';
+            }
+        }
+        
+        // Daily projects
+        if (e.target.classList.contains('daily-project-id')) {
+            const projectId = e.target.value;
+            const projectCard = e.target.closest('.project-card');
+            const projectNameInput = projectCard.querySelector('.daily-project-name');
+            
+            if (projectNameInput && projectId) {
+                const projectName = getProjectNameById(projectId);
+                projectNameInput.value = projectName || '';
+            } else if (projectNameInput) {
+                projectNameInput.value = '';
+            }
+        }
+    });
+}
+
+// Setup team change listeners để cập nhật project dropdowns
+function setupTeamChangeListeners() {
+    const teamSelect = document.getElementById('teamName');
+    const dailyTeamSelect = document.getElementById('dailyTeamName');
+    
+    if (teamSelect) {
+        teamSelect.addEventListener('change', function() {
+            const teamId = this.value;
+            localStorage.setItem(TEAM_ID_KEY, teamId);
+            populateAllProjectDropdowns(teamId);
+        });
+    }
+    
+    if (dailyTeamSelect) {
+        dailyTeamSelect.addEventListener('change', function() {
+            const teamId = this.value;
+            localStorage.setItem(TEAM_ID_KEY, teamId);
+            populateAllProjectDropdowns(teamId);
+        });
+    }
+    
+    // Leave team cũng lưu vào localStorage
+    const leaveTeamSelect = document.getElementById('leaveTeam');
+    if (leaveTeamSelect) {
+        leaveTeamSelect.addEventListener('change', function() {
+            localStorage.setItem(TEAM_ID_KEY, this.value);
+        });
+    }
+}
+
+// Load saved team ID từ localStorage
+function loadSavedTeamId() {
+    const savedTeamId = localStorage.getItem(TEAM_ID_KEY);
+    if (!savedTeamId) return;
+    
+    const teamSelects = [
+        document.getElementById('teamName'),
+        document.getElementById('dailyTeamName'),
+        document.getElementById('leaveTeam')
+    ];
+    
+    // Hàm helper để set value cho một select
+    const setTeamValue = (select) => {
+        if (!select || !savedTeamId) return;
+        
+        // Kiểm tra xem option có tồn tại không
+        const optionExists = Array.from(select.options).some(opt => opt.value === savedTeamId);
+        
+        if (optionExists) {
+            select.value = savedTeamId;
+            // Trigger change event để populate projects
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            console.log('Loaded team ID:', savedTeamId, 'for', select.id);
+            return true;
+        }
+        return false;
+    };
+    
+    // Thử set value ngay lập tức
+    teamSelects.forEach(select => {
+        if (select) {
+            if (!setTeamValue(select)) {
+                // Nếu chưa có option, đợi một chút rồi thử lại
+                setTimeout(() => {
+                    if (!setTeamValue(select)) {
+                        // Thử lại lần nữa sau 200ms
+                        setTimeout(() => {
+                            setTeamValue(select);
+                        }, 200);
+                    }
+                }, 100);
+            }
+        }
+    });
+}
+
+// Initialize config và dropdowns
+function initializeConfig() {
+    // Override getProjectNameById để tìm cả trong user projects
+    overrideGetProjectNameById();
+    
+    // Populate team dropdowns
+    populateTeamDropdowns();
+    
+    // Setup event listeners
+    setupTeamChangeListeners();
+    setupProjectIdChangeListeners();
+    
+    // Load saved team ID - đợi một chút để đảm bảo DOM đã sẵn sàng
+    setTimeout(() => {
+        loadSavedTeamId();
+    }, 50);
+}
+
+// Override getProjectNameById để chỉ tìm trong localStorage
+function overrideGetProjectNameById() {
+    window.getProjectNameById = function(projectId) {
+        // Tìm trong user projects
+        const userProjects = getUserProjects();
+        if (userProjects && userProjects.length > 0) {
+            const userProject = userProjects.find(p => p.id === projectId);
+            if (userProject) return userProject.name;
+        }
+        
+        return '';
+    };
+}
+
+// ==================== USER PROJECTS MANAGEMENT ====================
+
+// Lấy user projects từ localStorage
+function getUserProjects() {
+    const data = localStorage.getItem(USER_PROJECTS_KEY);
+    return data ? JSON.parse(data) : [];
+}
+
+// Lưu user projects vào localStorage
+function saveUserProjects(projects) {
+    localStorage.setItem(USER_PROJECTS_KEY, JSON.stringify(projects));
+}
+
+// Thêm project mới
+function addUserProject(project) {
+    const projects = getUserProjects();
+    // Kiểm tra trùng ID
+    if (projects.find(p => p.id === project.id)) {
+        return false; // ID đã tồn tại
+    }
+    projects.push(project);
+    saveUserProjects(projects);
+    return true;
+}
+
+// Cập nhật project
+function updateUserProject(projectId, updatedProject) {
+    const projects = getUserProjects();
+    const index = projects.findIndex(p => p.id === projectId);
+    if (index === -1) return false;
+    
+    // Nếu đổi ID, kiểm tra ID mới có trùng không
+    if (updatedProject.id !== projectId) {
+        if (projects.find(p => p.id === updatedProject.id && p.id !== projectId)) {
+            return false; // ID mới đã tồn tại
+        }
+    }
+    
+    projects[index] = updatedProject;
+    saveUserProjects(projects);
+    return true;
+}
+
+// Xóa project
+function deleteUserProject(projectId) {
+    const projects = getUserProjects();
+    const filtered = projects.filter(p => p.id !== projectId);
+    if (filtered.length === projects.length) return false; // Không tìm thấy
+    saveUserProjects(filtered);
+    return true;
+}
+
+// Helper: lấy team mặc định cho form thêm dự án mới
+function getDefaultTeamIdForNewProject() {
+    // Ưu tiên theo chế độ hiện tại
+    const dailyTeamSelect = document.getElementById('dailyTeamName');
+    const weeklyTeamSelect = document.getElementById('teamName');
+    if (currentReportMode === 'daily' && dailyTeamSelect && dailyTeamSelect.value) {
+        return dailyTeamSelect.value;
+    }
+    if (currentReportMode === 'weekly' && weeklyTeamSelect && weeklyTeamSelect.value) {
+        return weeklyTeamSelect.value;
+    }
+    // Fallback từ localStorage
+    const saved = localStorage.getItem(TEAM_ID_KEY);
+    if (saved) return saved;
+    return '';
+}
+
+// Mở modal settings
+function openProjectSettingsModal() {
+    const modal = document.getElementById('projectSettingsModal');
+    modal.style.display = 'block';
+    renderProjectSettingsList();
+    renderNewProjectsForm();
+}
+
+// Render form thêm project mới
+function renderNewProjectsForm() {
+    const container = document.getElementById('newProjectsList');
+    const defaultTeamId = getDefaultTeamIdForNewProject();
+
+    // Build options cho team select từ APP_CONFIG.teams
+    let teamOptions = '<option value="">Chọn team (tùy chọn)</option>';
+    if (APP_CONFIG && Array.isArray(APP_CONFIG.teams)) {
+        teamOptions += APP_CONFIG.teams.map(t => 
+            `<option value="${t.id}" ${defaultTeamId && t.id === defaultTeamId ? 'selected' : ''}>${t.id} - ${t.name}</option>`
+        ).join('');
+    }
+
+    container.innerHTML = `
+        <div class="new-project-row" style="
+            display: grid;
+            grid-template-columns: 1.5fr 2fr 2.5fr auto;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 10px;
+        ">
+            <input type="text" class="new-project-id" placeholder="Project ID" style="
+                padding: 10px 12px;
+                border: 2px solid var(--border-color);
+                border-radius: 8px;
+                background: var(--bg-secondary);
+                color: var(--text-primary);
+                font-size: 0.95em;
+            ">
+            <input type="text" class="new-project-name" placeholder="Project Name" style="
+                padding: 10px 12px;
+                border: 2px solid var(--border-color);
+                border-radius: 8px;
+                background: var(--bg-secondary);
+                color: var(--text-primary);
+                font-size: 0.95em;
+            ">
+            <select class="new-project-team" style="
+                padding: 10px 12px;
+                border: 2px solid var(--border-color);
+                border-radius: 8px;
+                background: var(--bg-secondary);
+                color: var(--text-primary);
+                font-size: 0.95em;
+            ">${teamOptions}</select>
+            <button type="button" class="btn-remove-new-project" style="
+                padding: 10px 12px;
+                background: #dc3545;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 1em;
+            " title="Xóa dòng">🗑️</button>
+        </div>
+    `;
+    
+    // Event listener cho nút xóa
+    container.querySelector('.btn-remove-new-project').addEventListener('click', function() {
+        if (container.querySelectorAll('.new-project-row').length > 1) {
+            this.closest('.new-project-row').remove();
+        }
+    });
+}
+
+// Thêm dòng mới vào form
+function addNewProjectRow() {
+    const container = document.getElementById('newProjectsList');
+    const newRow = document.createElement('div');
+    newRow.className = 'new-project-row';
+    newRow.style.cssText = `
+        display: grid;
+        grid-template-columns: 1.5fr 2fr 2.5fr auto;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 10px;
+    `;
+    // Build options với selected = team hiện tại
+    const defaultTeamId = getDefaultTeamIdForNewProject();
+    let teamOptions = '<option value="">Chọn team (tùy chọn)</option>';
+    if (APP_CONFIG && Array.isArray(APP_CONFIG.teams)) {
+        teamOptions += APP_CONFIG.teams.map(t => 
+            `<option value="${t.id}" ${defaultTeamId && t.id === defaultTeamId ? 'selected' : ''}>${t.id} - ${t.name}</option>`
+        ).join('');
+    }
+
+    newRow.innerHTML = `
+            <input type="text" class="new-project-id" placeholder="Project ID" style="
+                padding: 10px 12px;
+                border: 2px solid var(--border-color);
+                border-radius: 8px;
+                background: var(--bg-secondary);
+                color: var(--text-primary);
+                font-size: 0.95em;
+            ">
+            <input type="text" class="new-project-name" placeholder="Project Name" style="
+                padding: 10px 12px;
+                border: 2px solid var(--border-color);
+                border-radius: 8px;
+                background: var(--bg-secondary);
+                color: var(--text-primary);
+                font-size: 0.95em;
+            ">
+        <select class="new-project-team" style="
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.95em;
+        ">${teamOptions}</select>
+        <button type="button" class="btn-remove-new-project" style="
+            padding: 10px 12px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+        " title="Xóa dòng">🗑️</button>
+    `;
+    
+    container.appendChild(newRow);
+    
+    // Event listener cho nút xóa
+    newRow.querySelector('.btn-remove-new-project').addEventListener('click', function() {
+        if (container.querySelectorAll('.new-project-row').length > 1) {
+            newRow.remove();
+        }
+    });
+}
+
+// Lưu các project mới
+function saveNewProjects() {
+    const rows = document.querySelectorAll('#newProjectsList .new-project-row');
+    const newProjects = [];
+    const errors = [];
+    
+    rows.forEach((row, index) => {
+        const projectId = row.querySelector('.new-project-id').value.trim();
+        const projectName = row.querySelector('.new-project-name').value.trim();
+        const teamId = row.querySelector('.new-project-team').value.trim() || null;
+        
+        // Bỏ qua dòng trống
+        if (!projectId && !projectName) return;
+        
+        // Validate
+        if (!projectId) {
+            errors.push(`Dòng ${index + 1}: Thiếu Project ID`);
+            return;
+        }
+        if (!projectName) {
+            errors.push(`Dòng ${index + 1}: Thiếu Project Name`);
+            return;
+        }
+        
+        // Kiểm tra trùng ID trong danh sách mới
+        if (newProjects.find(p => p.id === projectId)) {
+            errors.push(`Dòng ${index + 1}: Project ID "${projectId}" đã tồn tại trong danh sách mới`);
+            return;
+        }
+        
+        // Kiểm tra trùng ID với projects đã lưu
+        const existingProjects = getUserProjects();
+        if (existingProjects.find(p => p.id === projectId)) {
+            errors.push(`Dòng ${index + 1}: Project ID "${projectId}" đã tồn tại trong danh sách đã lưu`);
+            return;
+        }
+        
+        newProjects.push({
+            id: projectId,
+            name: projectName,
+            teamId: teamId
+        });
+    });
+    
+    if (errors.length > 0) {
+        showToast(errors[0], 'error');
+        return;
+    }
+    
+    if (newProjects.length === 0) {
+        alert('⚠️ Không có dự án nào để lưu. Vui lòng điền thông tin.');
+        return;
+    }
+    
+    // Lưu tất cả projects mới
+    const existingProjects = getUserProjects();
+    existingProjects.push(...newProjects);
+    saveUserProjects(existingProjects);
+    
+    showToast(`Đã thêm ${newProjects.length} dự án thành công!`, 'success');
+    
+    // Clear form và reload
+    renderNewProjectsForm();
+    renderProjectSettingsList();
+    reloadAllProjectDropdowns();
+}
+
+// Đóng modal settings
+function closeProjectSettingsModal() {
+    const modal = document.getElementById('projectSettingsModal');
+    modal.style.display = 'none';
+}
+
+// Render danh sách projects trong settings
+function renderProjectSettingsList() {
+    const container = document.getElementById('projectSettingsList');
+    const projects = getUserProjects();
+    
+    if (projects.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">Chưa có dự án nào. Thêm dự án mới ở trên.</div>';
+        return;
+    }
+    
+    container.innerHTML = projects.map((project, index) => `
+        <div class="project-setting-item" data-project-id="${project.id}" style="
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        ">
+            <div style="display: grid; grid-template-columns: 1.5fr 3fr 1.5fr 160px; gap: 12px; align-items: center;">
+                <input type="text" class="edit-project-id" value="${project.id}" data-original-id="${project.id}" style="
+                    padding: 10px 12px;
+                    border: 2px solid var(--border-color);
+                    border-radius: 8px;
+                    background: var(--bg-secondary);
+                    color: var(--text-primary);
+                    font-weight: 600;
+                    font-size: 0.95em;
+                ">
+                <input type="text" class="edit-project-name" value="${project.name || ''}" style="
+                    padding: 10px 12px;
+                    border: 2px solid var(--border-color);
+                    border-radius: 8px;
+                    background: var(--bg-secondary);
+                    color: var(--text-primary);
+                    font-size: 0.95em;
+                ">
+                <input type="text" class="edit-project-team" value="${project.teamId || ''}" placeholder="Team ID (tùy chọn)" style="
+                    padding: 10px 12px;
+                    border: 2px solid var(--border-color);
+                    border-radius: 8px;
+                    background: var(--bg-secondary);
+                    color: var(--text-primary);
+                    font-size: 0.95em;
+                ">
+                <div style="display: flex; gap: 8px; flex-shrink: 0; min-width: 160px; justify-content: flex-end;">
+                    <button type="button" class="btn-save-project" data-project-id="${project.id}" style="
+                        padding: 10px 16px;
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 0.9em;
+                        white-space: nowrap;
+                        min-width: 70px;
+                        transition: all 0.3s ease;
+                    " title="Lưu thay đổi">💾</button>
+                    <button type="button" class="btn-delete-project" data-project-id="${project.id}" style="
+                        padding: 10px 16px;
+                        background: #dc3545;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 0.9em;
+                        white-space: nowrap;
+                        min-width: 70px;
+                        transition: all 0.3s ease;
+                    " title="Xóa dự án">🗑️</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    // Event listeners cho các nút
+    container.querySelectorAll('.btn-save-project').forEach(btn => {
+        btn.addEventListener('click', () => saveEditedProject(btn.dataset.projectId));
+    });
+    
+    container.querySelectorAll('.btn-delete-project').forEach(btn => {
+        btn.addEventListener('click', () => deleteUserProjectHandler(btn.dataset.projectId));
+    });
+}
+
+// Lưu project đã chỉnh sửa
+function saveEditedProject(projectId) {
+    const item = document.querySelector(`.project-setting-item[data-project-id="${projectId}"]`);
+    if (!item) return;
+    
+    const originalId = item.querySelector('.edit-project-id').dataset.originalId;
+    const newId = item.querySelector('.edit-project-id').value.trim();
+    const newName = item.querySelector('.edit-project-name').value.trim();
+    const newTeamId = item.querySelector('.edit-project-team').value.trim() || null;
+    
+    // Validate
+    if (!newId) { showToast('Project ID không được để trống!', 'error'); return; }
+    if (!newName) { showToast('Project Name không được để trống!', 'error'); return; }
+    
+    const updatedProject = {
+        id: newId,
+        name: newName,
+        teamId: newTeamId
+    };
+    
+    if (updateUserProject(originalId, updatedProject)) {
+        showToast('Đã cập nhật dự án thành công!', 'success');
+        renderProjectSettingsList();
+        // Reload project dropdowns
+        reloadAllProjectDropdowns();
+    } else {
+        showToast('Không thể cập nhật. Project ID mới đã tồn tại!', 'error');
+    }
+}
+
+// Xử lý xóa project
+function deleteUserProjectHandler(projectId) {
+    if (!confirm(`Bạn có chắc muốn xóa dự án "${projectId}"?`)) return;
+    
+    if (deleteUserProject(projectId)) {
+        showToast('Đã xóa dự án thành công!', 'success');
+        renderProjectSettingsList();
+        // Reload project dropdowns
+        reloadAllProjectDropdowns();
+    } else {
+        showToast('Không tìm thấy dự án để xóa!', 'error');
+    }
+}
+
+// Reload tất cả project dropdowns
+function reloadAllProjectDropdowns() {
+    const teamSelect = document.getElementById('teamName');
+    const dailyTeamSelect = document.getElementById('dailyTeamName');
+    
+    if (teamSelect && teamSelect.value) {
+        populateAllProjectDropdowns(teamSelect.value);
+    }
+    if (dailyTeamSelect && dailyTeamSelect.value) {
+        populateAllProjectDropdowns(dailyTeamSelect.value);
+    }
+}
+
+// ==================== END USER PROJECTS MANAGEMENT ====================
+
+// ==================== END CONFIG & DROPDOWN MANAGEMENT ====================
 
 // Lấy danh sách reports từ localStorage
 function getReports() {
@@ -104,7 +785,23 @@ function editReport(id, event) {
             
             const projectIdInput = cardElement.querySelector('.project-id');
             const projectNameInput = cardElement.querySelector('.project-name');
-            if (projectIdInput) projectIdInput.value = projectIdValue;
+            
+            // Populate project dropdown nếu đã chọn team
+            const teamSelect = document.getElementById('teamName');
+            if (teamSelect && teamSelect.value && projectIdInput && projectIdInput.tagName === 'SELECT') {
+                populateProjectDropdown(projectIdInput, teamSelect.value);
+            }
+            
+            // Set values sau khi populate
+            if (projectIdInput) {
+                if (projectIdInput.tagName === 'SELECT') {
+                    projectIdInput.value = projectIdValue;
+                    // Trigger change để auto-fill project name
+                    projectIdInput.dispatchEvent(new Event('change'));
+                } else {
+                    projectIdInput.value = projectIdValue;
+                }
+            }
             if (projectNameInput) projectNameInput.value = projectNameValue;
             
             cardElement.querySelector('.project-completed').value = Array.isArray(project.completedTasks) 
@@ -153,6 +850,13 @@ function resetFormToNew() {
     editingReportId = null;
     const form = document.getElementById('reportForm');
     form.reset();
+    // Re-apply saved team ID after reset to avoid losing selection
+    const savedTeamId = localStorage.getItem(TEAM_ID_KEY);
+    const weeklyTeamSelect = document.getElementById('teamName');
+    if (weeklyTeamSelect && savedTeamId) {
+        weeklyTeamSelect.value = savedTeamId;
+        weeklyTeamSelect.dispatchEvent(new Event('change'));
+    }
     
     // Xóa tất cả projects và thêm lại project đầu tiên
     document.getElementById('projectsContainer').innerHTML = '';
@@ -193,6 +897,13 @@ function addProject() {
     const cardElement = projectCard.querySelector('.project-card');
     cardElement.setAttribute('data-project-id', projectId);
     
+    // Populate project dropdown nếu đã chọn team
+    const teamSelect = document.getElementById('teamName');
+    const projectSelect = cardElement.querySelector('.project-id');
+    if (teamSelect && teamSelect.value && projectSelect) {
+        populateProjectDropdown(projectSelect, teamSelect.value);
+    }
+    
     // Event listener cho nút xóa
     const removeBtn = projectCard.querySelector('.btn-remove-project');
     removeBtn.addEventListener('click', function() {
@@ -222,11 +933,13 @@ function formatProjectDisplayName(projectId, projectName) {
 // Lấy dữ liệu từ các projects
 function getProjectsData() {
     const projects = [];
-    const projectCards = document.querySelectorAll('.project-card');
+    const projectCards = document.querySelectorAll('.project-card:not([data-daily-project-id])');
     
     projectCards.forEach(card => {
-        const projectId = card.querySelector('.project-id')?.value.trim() || '';
-        const projectName = card.querySelector('.project-name')?.value.trim() || '';
+        const projectIdEl = card.querySelector('.project-id');
+        const projectId = projectIdEl ? (projectIdEl.tagName === 'SELECT' ? projectIdEl.value.trim() : projectIdEl.value.trim()) : '';
+        const projectNameEl = card.querySelector('.project-name');
+        const projectName = projectNameEl ? projectNameEl.value.trim() : '';
         
         // Bỏ qua project chưa có cả ID và Name
         if (!projectId && !projectName) return;
@@ -772,6 +1485,13 @@ function addDailyProject() {
     const cardElement = projectCard.querySelector('.project-card');
     cardElement.setAttribute('data-daily-project-id', projectId);
     
+    // Populate project dropdown nếu đã chọn team
+    const teamSelect = document.getElementById('dailyTeamName');
+    const projectSelect = cardElement.querySelector('.daily-project-id');
+    if (teamSelect && teamSelect.value && projectSelect) {
+        populateProjectDropdown(projectSelect, teamSelect.value);
+    }
+    
     // Event listener cho nút xóa
     const removeBtn = projectCard.querySelector('.btn-remove-project');
     // Hide remove button in daily (single-project) mode
@@ -792,8 +1512,10 @@ function getDailyProjectsData() {
     const projectCards = document.querySelectorAll('#dailyProjectsContainer .project-card');
     
     projectCards.forEach(card => {
-        const projectId = card.querySelector('.daily-project-id')?.value.trim() || '';
-        const projectName = card.querySelector('.daily-project-name')?.value.trim() || '';
+        const projectIdEl = card.querySelector('.daily-project-id');
+        const projectId = projectIdEl ? (projectIdEl.tagName === 'SELECT' ? projectIdEl.value.trim() : projectIdEl.value.trim()) : '';
+        const projectNameEl = card.querySelector('.daily-project-name');
+        const projectName = projectNameEl ? projectNameEl.value.trim() : '';
         
         // Bỏ qua project chưa có cả ID và Name
         if (!projectId && !projectName) return;
@@ -886,6 +1608,13 @@ function formatDailyReport(report) {
 function resetDailyFormToNew() {
     const form = document.getElementById('dailyReportForm');
     form.reset();
+    // Re-apply saved team ID after reset so daily project dropdown populates correctly
+    const savedTeamId = localStorage.getItem(TEAM_ID_KEY);
+    const dailyTeamSelect = document.getElementById('dailyTeamName');
+    if (dailyTeamSelect && savedTeamId) {
+        dailyTeamSelect.value = savedTeamId;
+        dailyTeamSelect.dispatchEvent(new Event('change'));
+    }
     
     // Xóa tất cả projects
     document.getElementById('dailyProjectsContainer').innerHTML = '';
@@ -1135,7 +1864,7 @@ function switchToDailyMode() {
     // Set default date to today
     setDefaultDailyDate();
     
-    // Reset form
+    // Reset form (bên trong sẽ tự re-apply team ID từ localStorage)
     resetDailyFormToNew();
 }
 
@@ -1157,7 +1886,7 @@ function switchToWeeklyMode() {
     document.querySelector('header h1').textContent = '📊 Weekly Report Generator';
     document.querySelector('header p').textContent = 'Tạo báo cáo tuần theo dự án và gửi tự động lên Discord Channel';
     
-    // Reset form
+    // Reset form (bên trong sẽ tự re-apply team ID từ localStorage)
     resetFormToNew();
 }
 
@@ -1192,9 +1921,12 @@ const LEAVE_TEAM_KEY = 'leave_team_default';
 function openLeaveModal() {
     const modal = document.getElementById('leaveModal');
     modal.style.display = 'block';
-    // Prefill defaults
-    const savedTeam = localStorage.getItem(LEAVE_TEAM_KEY) || (document.getElementById('teamName')?.value || '');
-    document.getElementById('leaveTeam').value = savedTeam;
+    // Prefill defaults - ưu tiên teamID từ localStorage
+    const savedTeamId = localStorage.getItem(TEAM_ID_KEY) || localStorage.getItem(LEAVE_TEAM_KEY) || '';
+    const leaveTeamSelect = document.getElementById('leaveTeam');
+    if (leaveTeamSelect && savedTeamId) {
+        leaveTeamSelect.value = savedTeamId;
+    }
     // Default date = today
     const today = new Date();
     document.getElementById('leaveDate').value = toLocalDateInput(today);
@@ -1342,6 +2074,25 @@ async function copyLeaveToClipboard() {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
+    // Kiểm tra authentication trước
+    if (typeof isAuthenticated === 'function' && !isAuthenticated()) {
+        // Chờ authentication hoàn tất
+        const checkAuth = setInterval(() => {
+            if (typeof isAuthenticated === 'function' && isAuthenticated()) {
+                clearInterval(checkAuth);
+                initializeApp();
+            }
+        }, 100);
+        return;
+    }
+    
+    initializeApp();
+});
+
+function initializeApp() {
+    // Initialize config và dropdowns trước
+    initializeConfig();
+    
     // Initialize theme and report mode
     initTheme();
     // Initialize based on saved mode (also sets buttons and toggles forms)
@@ -1356,6 +2107,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     setDefaultDates();
     renderReports();
+    
+    // Load lại team ID sau khi đã switch mode (đảm bảo dropdown đã sẵn sàng)
+    setTimeout(() => {
+        loadSavedTeamId();
+    }, 200);
     
     // Menu event listeners
     document.getElementById('menuButton').addEventListener('click', toggleMenu);
@@ -1378,6 +2134,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Weekly form event listeners
     document.getElementById('addProjectBtn').addEventListener('click', addProject);
+    document.getElementById('projectSettingsBtn').addEventListener('click', openProjectSettingsModal);
     document.getElementById('previewBtn').addEventListener('click', previewReport);
     document.getElementById('copyTextBtn').addEventListener('click', copyReportToClipboard);
     document.getElementById('copyPreviewBtn').addEventListener('click', copyPreviewToClipboard);
@@ -1401,6 +2158,19 @@ document.addEventListener('DOMContentLoaded', function() {
         mainContent.classList.remove('grid-2-cols');
     });
 
+    // Project settings modal events
+    const projectSettingsModal = document.getElementById('projectSettingsModal');
+    if (projectSettingsModal) {
+        document.getElementById('projectSettingsBackdrop').addEventListener('click', closeProjectSettingsModal);
+        document.getElementById('projectSettingsCloseBtn').addEventListener('click', closeProjectSettingsModal);
+        document.getElementById('addNewProjectRowBtn').addEventListener('click', addNewProjectRow);
+        document.getElementById('saveNewProjectsBtn').addEventListener('click', saveNewProjects);
+        const dailyProjectSettingsBtn = document.getElementById('dailyProjectSettingsBtn');
+        if (dailyProjectSettingsBtn) {
+            dailyProjectSettingsBtn.addEventListener('click', openProjectSettingsModal);
+        }
+    }
+    
     // Leave modal events
     document.getElementById('leaveModalBackdrop').addEventListener('click', closeLeaveModal);
     document.getElementById('leaveCloseBtn').addEventListener('click', closeLeaveModal);
@@ -1429,7 +2199,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+}
+
+// Thêm nút logout vào menu
+function addLogoutButton() {
+    const menuDropdown = document.getElementById('menuDropdown');
+    if (!menuDropdown) return;
+    
+    // Kiểm tra xem đã có nút logout chưa
+    if (document.getElementById('logoutBtn')) return;
+    
+    // Tạo divider và logout button
+    const divider = document.createElement('div');
+    divider.className = 'menu-divider';
+    
+    const logoutItem = document.createElement('div');
+    logoutItem.className = 'menu-item';
+    logoutItem.id = 'logoutBtn';
+    logoutItem.innerHTML = '<span class="menu-icon">🚪</span><span class="menu-text">Logout</span>';
+    logoutItem.addEventListener('click', function() {
+        if (typeof logout === 'function') {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                logout();
+            }
+        }
+        document.getElementById('menuDropdown').style.display = 'none';
+    });
+    
+    menuDropdown.appendChild(divider);
+    menuDropdown.appendChild(logoutItem);
+}
 
 // Export function để dùng trong HTML
 window.viewReport = viewReport;
