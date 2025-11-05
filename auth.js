@@ -139,11 +139,7 @@ function initializeAuth() {
         return;
     }
     
-    // Set client_id vào HTML div (cho Google SDK)
-    const gIdOnload = document.getElementById('g_id_onload');
-    if (gIdOnload) {
-        gIdOnload.setAttribute('data-client_id', GOOGLE_CLIENT_ID);
-    }
+    // Không dùng g_id_onload để tránh SDK đọc data-client_id trước khi JS thiết lập
     
     // Khởi tạo Google Sign-In bằng JavaScript
     if (window.google && window.google.accounts) {
