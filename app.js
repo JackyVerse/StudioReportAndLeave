@@ -5,6 +5,15 @@ const USER_PROJECTS_KEY = 'user_projects'; // Lưu projects của user trong loc
 let projectCounter = 0;
 let dailyProjectCounter = 0;
 
+// Teams configuration
+const TEAMS = [
+    { id: 'FE', name: 'Frontend' },
+    { id: 'ART', name: 'Art' },
+    { id: 'ANIM', name: 'Animation' },
+    { id: 'GD', name: 'Game Design' },
+    { id: 'DESIGN', name: 'Design' }
+];
+
 // ==================== TOAST UTILS ====================
 function showToast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
@@ -30,9 +39,9 @@ function showToast(message, type = 'success') {
 
 // ==================== CONFIG & DROPDOWN MANAGEMENT ====================
 
-// Populate team dropdown từ config
+// Populate team dropdown
 function populateTeamDropdowns() {
-    if (!APP_CONFIG || !APP_CONFIG.teams) return;
+    if (!TEAMS || TEAMS.length === 0) return;
     
     const teamSelects = [
         document.getElementById('teamName'),
@@ -48,8 +57,8 @@ function populateTeamDropdowns() {
             select.remove(1);
         }
         
-        // Add teams từ config
-        APP_CONFIG.teams.forEach(team => {
+        // Add teams
+        TEAMS.forEach(team => {
             const option = document.createElement('option');
             option.value = team.id;
             option.textContent = `${team.id} - ${team.name}`;
@@ -339,10 +348,10 @@ function renderNewProjectsForm() {
     const container = document.getElementById('newProjectsList');
     const defaultTeamId = getDefaultTeamIdForNewProject();
 
-    // Build options cho team select từ APP_CONFIG.teams
+    // Build options cho team select
     let teamOptions = '<option value="">Chọn team (tùy chọn)</option>';
-    if (APP_CONFIG && Array.isArray(APP_CONFIG.teams)) {
-        teamOptions += APP_CONFIG.teams.map(t => 
+    if (TEAMS && Array.isArray(TEAMS)) {
+        teamOptions += TEAMS.map(t => 
             `<option value="${t.id}" ${defaultTeamId && t.id === defaultTeamId ? 'selected' : ''}>${t.id} - ${t.name}</option>`
         ).join('');
     }
@@ -414,8 +423,8 @@ function addNewProjectRow() {
     // Build options với selected = team hiện tại
     const defaultTeamId = getDefaultTeamIdForNewProject();
     let teamOptions = '<option value="">Chọn team (tùy chọn)</option>';
-    if (APP_CONFIG && Array.isArray(APP_CONFIG.teams)) {
-        teamOptions += APP_CONFIG.teams.map(t => 
+    if (TEAMS && Array.isArray(TEAMS)) {
+        teamOptions += TEAMS.map(t => 
             `<option value="${t.id}" ${defaultTeamId && t.id === defaultTeamId ? 'selected' : ''}>${t.id} - ${t.name}</option>`
         ).join('');
     }
