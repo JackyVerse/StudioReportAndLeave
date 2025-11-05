@@ -201,7 +201,7 @@ function loadSavedTeamId() {
             select.value = savedTeamId;
             // Trigger change event để populate projects
             select.dispatchEvent(new Event('change', { bubbles: true }));
-            console.log('Loaded team ID:', savedTeamId, 'for', select.id);
+            
             return true;
         }
         return false;

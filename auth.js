@@ -15,9 +15,7 @@ function isAuthenticated() {
         if (user.email && user.email.endsWith(`@${ALLOWED_DOMAIN}`)) {
             return true;
         }
-    } catch (e) {
-        console.error('Error parsing auth data:', e);
-    }
+    } catch (e) {}
     
     return false;
 }
@@ -36,7 +34,7 @@ function getCurrentUser() {
 
 // Xử lý response từ Google Sign-In
 function handleCredentialResponse(response) {
-    console.warn('handleCredentialResponse', response);
+    
     // Decode JWT token từ Google
     try {
         // Decode JWT (không verify, chỉ decode để lấy thông tin)
@@ -68,10 +66,7 @@ function handleCredentialResponse(response) {
         // Ẩn login screen và hiện main app
         showMainApp();
         
-    } catch (error) {
-        console.error('Error handling credential:', error);
-        showLoginError('❌ Lỗi xác thực. Vui lòng thử lại.');
-    }
+    } catch (error) { showLoginError('❌ Lỗi xác thực. Vui lòng thử lại.'); }
 }
 
 // Hiển thị main app
@@ -144,7 +139,7 @@ function initializeAuth() {
     // Khởi tạo Google Sign-In bằng JavaScript
     if (window.google && window.google.accounts) {
         try {
-            console.log('Initializing Google Sign-In with Client ID:', GOOGLE_CLIENT_ID);
+            
             
             // Khởi tạo với callback
             window.google.accounts.id.initialize({
@@ -170,10 +165,9 @@ function initializeAuth() {
                         type: 'standard'
                     }
                 );
-                console.log('Google Sign-In button rendered successfully');
+                
             }
         } catch (error) {
-            console.error('Error initializing Google Sign-In:', error);
             const errorDiv = document.getElementById('loginError');
             if (errorDiv) {
                 errorDiv.innerHTML = `❌ Lỗi khởi tạo Google Sign-In: ${error.message}<br><br>Vui lòng kiểm tra:<br>1. Client ID đã đúng chưa<br>2. Đã enable Google Identity Services API chưa<br>3. Đã cấu hình OAuth consent screen chưa<br>4. Đã thêm test users chưa (nếu dùng External app)<br>5. Đã thêm authorized origins chưa`;
@@ -181,7 +175,6 @@ function initializeAuth() {
             }
         }
     } else {
-        console.error('Google SDK chưa load xong');
         const errorDiv = document.getElementById('loginError');
         if (errorDiv) {
             errorDiv.innerHTML = '⚠️ Google Sign-In SDK chưa load. Vui lòng refresh trang.';
