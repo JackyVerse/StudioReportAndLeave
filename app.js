@@ -975,6 +975,43 @@ function getProjectsData() {
     return projects;
 }
 
+// Parse task để tách task name và timeline (nếu có)
+function parseTaskWithTimeline(task) {
+    task = task.trim();
+    if (!task) {
+        return { taskName: task, timeline: null, isDone: false, lateInfo: null };
+    }
+    
+    // Kiểm tra format "Task ---> T2 Done" hoặc "Task ---> T2"
+    if (task.includes('--->')) {
+        const parts = task.split('--->');
+        const taskName = parts[0].trim();
+        let timelinePart = parts[1] ? parts[1].trim() : '';
+        
+        // Kiểm tra late info trước: "Task ---> T3 (Late: 20% - Do thiếu asset)"
+        let lateInfo = null;
+        let timeline = timelinePart;
+        if (timelinePart.includes('(') && timelinePart.includes('Late:')) {
+            const lateStart = timelinePart.indexOf('(');
+            const lateEnd = timelinePart.indexOf(')', lateStart);
+            if (lateEnd > lateStart) {
+                lateInfo = timelinePart.substring(lateStart + 1, lateEnd);
+                timeline = timelinePart.substring(0, lateStart).trim();
+            }
+        }
+        
+        // Kiểm tra Done sau khi đã tách late info
+        const isDone = timeline.includes('Done') || timeline.includes('done');
+        if (isDone) {
+            timeline = timeline.replace(/Done/gi, '').trim();
+        }
+        
+        return { taskName, timeline, isDone, lateInfo };
+    }
+    
+    return { taskName: task, timeline: null, isDone: false, lateInfo: null };
+}
+
 // Format report để hiển thị (theo từng dự án)
 function formatReport(report) {
     let formatted = `📊 **WEEKLY REPORT - WEEK ${report.weekNumber}/${report.year}**\n\n`;
@@ -986,51 +1023,130 @@ function formatReport(report) {
     
     formatted += `📅 **Period:** ${formatDate(report.startDate)} - ${formatDate(report.endDate)}\n\n`;
     
-    // Format theo từng dự án
+    // Format theo từng dự án (format mới)
     if (report.projects && report.projects.length > 0) {
         report.projects.forEach((project, index) => {
-            formatted += `---\n\n`;
-            formatted += `## 📁 ${index + 1}. ${project.name}\n\n`;
+            // Lấy project ID và Name
+            const projectId = project.projectId || '';
+            const projectName = project.projectName || '';
+            let displayName = '';
             
-            // Completed tasks
-            if (project.completedTasks && project.completedTasks.length > 0) {
-                formatted += `✅ **COMPLETED:**\n`;
-                project.completedTasks.forEach(task => {
-                    if (task) formatted += `  • ${task}\n`;
+            if (projectId && projectName) {
+                displayName = `${projectId} - ${projectName}`;
+            } else if (projectId) {
+                displayName = projectId;
+            } else if (projectName) {
+                displayName = projectName;
+            } else {
+                displayName = project.name || 'Unnamed Project';
+            }
+            
+            // Format mới: 🎮 Project name
+            formatted += `🎮 ${displayName}\n\n`;
+            formatted += `== Scope of work ==\n\n`;
+            
+            // 1/ ONTIME - từ completedTasks
+            const completed = project.completedTasks || [];
+            const ontimePercentage = project.ontimePercentage || '';
+            
+            if (completed.length > 0) {
+                formatted += ontimePercentage ? `1/ ONTIME (${ontimePercentage}%):\n\n` : `1/ ONTIME:\n\n`;
+                completed.forEach(task => {
+                    if (task) {
+                        const parsed = parseTaskWithTimeline(task);
+                        let formattedTask = task;
+                        if (task.includes('--->')) {
+                            if (parsed.timeline) {
+                                if (parsed.isDone) {
+                                    formattedTask = `${parsed.taskName} ---> ${parsed.timeline} Done`;
+                                } else {
+                                    formattedTask = `${parsed.taskName} ---> ${parsed.timeline}`;
+                                }
+                            } else {
+                                formattedTask = parsed.isDone ? `${parsed.taskName} ---> Done` : `${parsed.taskName}`;
+                            }
+                        }
+                        formatted += `   - ${formattedTask}\n`;
+                    }
                 });
                 formatted += `\n`;
             } else {
-                formatted += `✅ **COMPLETED:** N/A\n\n`;
+                formatted += ontimePercentage ? `1/ ONTIME (${ontimePercentage}%):\n\n` : `1/ ONTIME:\n\n`;
             }
             
-            // In progress tasks
-            if (project.inProgressTasks && project.inProgressTasks.length > 0) {
-                formatted += `🔄 **IN PROGRESS:**\n`;
-                project.inProgressTasks.forEach(task => {
-                    if (task) formatted += `  • ${task}\n`;
+            // 2/ NEXT TARGET - từ plannedTasks
+            const planned = project.plannedTasks || [];
+            const nextTargetPercentage = project.nextTargetPercentage || '';
+            
+            if (planned.length > 0) {
+                formatted += nextTargetPercentage ? `2/ NEXT TARGET (${nextTargetPercentage}%):\n\n` : `2/ NEXT TARGET:\n\n`;
+                planned.forEach(task => {
+                    if (task) {
+                        const parsed = parseTaskWithTimeline(task);
+                        let formattedTask = task;
+                        if (task.includes('--->')) {
+                            if (parsed.timeline) {
+                                formattedTask = `${parsed.taskName} ---> ${parsed.timeline}`;
+                            } else {
+                                formattedTask = `${parsed.taskName}`;
+                            }
+                        }
+                        formatted += `   - ${formattedTask}\n`;
+                    }
                 });
                 formatted += `\n`;
             } else {
-                formatted += `🔄 **IN PROGRESS:** N/A\n\n`;
+                formatted += nextTargetPercentage ? `2/ NEXT TARGET (${nextTargetPercentage}%):\n\n` : `2/ NEXT TARGET:\n\n`;
             }
             
-            // Planned tasks
-            if (project.plannedTasks && project.plannedTasks.length > 0) {
-                formatted += `📋 **PLANNED:**\n`;
-                project.plannedTasks.forEach(task => {
-                    if (task) formatted += `  • ${task}\n`;
+            // 3/ NOTE / ISSUES - từ notes
+            const notes = project.notes || '';
+            if (notes && notes.trim()) {
+                formatted += `3/ NOTE / ISSUES:\n\n`;
+                const noteLines = notes.trim().split('\n');
+                noteLines.forEach(line => {
+                    if (line.trim()) {
+                        formatted += `   - ${line.trim()}\n`;
+                    }
                 });
                 formatted += `\n`;
             } else {
-                formatted += `📋 **PLANNED:** N/A\n\n`;
+                formatted += `3/ NOTE / ISSUES:\n\n`;
             }
             
-            // Notes
-            if (project.notes && project.notes.trim()) {
-                formatted += `📝 **NOTES / BLOCKERS:**\n`;
-                formatted += `${project.notes.trim()}\n\n`;
+            // 4/ LATED - từ latedTasks hoặc inProgressTasks có late info
+            let lated = project.latedTasks || [];
+            if (lated.length === 0) {
+                // Fallback: kiểm tra inProgressTasks có chứa late info không
+                const inProgress = project.inProgressTasks || [];
+                lated = inProgress.filter(task => {
+                    if (!task) return false;
+                    const parsed = parseTaskWithTimeline(task);
+                    return parsed.lateInfo !== null;
+                });
+            }
+            
+            if (lated.length > 0) {
+                formatted += `4/ LATED:\n\n`;
+                lated.forEach(task => {
+                    if (task) {
+                        const parsed = parseTaskWithTimeline(task);
+                        let formattedTask = task;
+                        if (task.includes('--->')) {
+                            if (parsed.timeline && parsed.lateInfo) {
+                                formattedTask = `${parsed.taskName} ---> ${parsed.timeline} (${parsed.lateInfo})`;
+                            } else if (parsed.timeline) {
+                                formattedTask = `${parsed.taskName} ---> ${parsed.timeline}`;
+                            } else {
+                                formattedTask = `${parsed.taskName}`;
+                            }
+                        }
+                        formatted += `   - ${formattedTask}\n`;
+                    }
+                });
+                formatted += `\n`;
             } else {
-                formatted += `📝 **NOTES / BLOCKERS:** N/A\n\n`;
+                formatted += `4/ LATED:\n\n`;
             }
         });
     } else {

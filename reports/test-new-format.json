@@ -1,0 +1,48 @@
+{
+  "weekNumber": 1,
+  "year": 2025,
+  "startDate": "2025-01-06",
+  "endDate": "2025-01-12",
+  "teamName": "Game Studio Team",
+  "projects": [
+    {
+      "projectId": "GAME-001",
+      "projectName": "RPG Adventure Game",
+      "ontimePercentage": "30",
+      "nextTargetPercentage": "50",
+      "completedTasks": [
+        "Task A ---> T2 Done",
+        "Task B ---> T1 Done"
+      ],
+      "plannedTasks": [
+        "Task C ---> T2",
+        "Task D ---> T3",
+        "Task E ---> T4"
+      ],
+      "notes": "Delivery Planning (GDD) ---> Tuần 4, Tháng 11\n\nFlow game trong doc chưa clear...",
+      "latedTasks": [
+        "Task B ---> T3 (Late: 20% - Do thiếu asset)"
+      ]
+    },
+    {
+      "projectId": "GAME-002",
+      "projectName": "Puzzle Game",
+      "ontimePercentage": "40",
+      "nextTargetPercentage": "60",
+      "completedTasks": [
+        "Design level 1-5 ---> T1 Done",
+        "Implement core mechanics ---> T2 Done"
+      ],
+      "plannedTasks": [
+        "Design level 6-10 ---> T2",
+        "Add sound effects ---> T3",
+        "Polish UI ---> T4"
+      ],
+      "notes": "Cần review từ game designer",
+      "inProgressTasks": [
+        "Bug fixing ---> T2 (Late: 15% - Do conflict với hệ thống cũ)"
+      ]
+    }
+  ]
+}
+

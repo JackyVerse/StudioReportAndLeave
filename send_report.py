@@ -129,6 +129,41 @@ def format_daily_report_for_discord(report: Dict[str, Any]) -> str:
     return message
 
 
+def parse_task_with_timeline(task: str) -> tuple:
+    """Parse task để tách task name và timeline (nếu có)
+    Returns: (task_name, timeline, is_done, late_info)
+    """
+    task = task.strip()
+    if not task:
+        return (task, None, False, None)
+    
+    # Kiểm tra format "Task ---> T2 Done" hoặc "Task ---> T2"
+    if '--->' in task:
+        parts = task.split('--->')
+        task_name = parts[0].strip()
+        timeline_part = parts[1].strip() if len(parts) > 1 else ''
+        
+        # Kiểm tra late info trước: "Task ---> T3 (Late: 20% - Do thiếu asset)"
+        late_info = None
+        timeline = timeline_part
+        if '(' in timeline_part and 'Late:' in timeline_part:
+            # Tách late info
+            late_start = timeline_part.find('(')
+            late_end = timeline_part.find(')', late_start)
+            if late_end > late_start:
+                late_info = timeline_part[late_start+1:late_end]
+                timeline = timeline_part[:late_start].strip()
+        
+        # Kiểm tra Done sau khi đã tách late info
+        is_done = 'Done' in timeline or 'done' in timeline
+        if is_done:
+            timeline = timeline.replace('Done', '').replace('done', '').strip()
+        
+        return (task_name, timeline, is_done, late_info)
+    
+    return (task, None, False, None)
+
+
 def format_weekly_report_for_discord(report: Dict[str, Any]) -> str:
     """Format weekly report thành message Discord với markdown"""
     
@@ -168,57 +203,123 @@ def format_weekly_report_for_discord(report: Dict[str, Any]) -> str:
                 # Fallback về name cũ (backward compatibility)
                 display_name = project.get('name', 'Unnamed Project')
             
-            message += f"---\n\n"
-            message += f"## 📁 {index}. {display_name}\n\n"
+            # Format mới: 🎮 Project name
+            message += f"🎮 {display_name}\n\n"
+            message += f"== Scope of work ==\n\n"
             
-            # Completed tasks
+            # 1/ ONTIME - từ completedTasks
             completed = project.get('completedTasks', [])
             if isinstance(completed, str):
                 completed = [t.strip() for t in completed.split('\n') if t.strip()]
             
+            # Lấy phần trăm ONTIME từ project hoặc tính toán
+            ontime_percentage = project.get('ontimePercentage', '')
+            if not ontime_percentage and completed:
+                # Nếu không có phần trăm, có thể để trống hoặc tính toán
+                ontime_percentage = ''
+            
             if completed:
-                message += "### ✅ COMPLETED:\n"
+                message += f"1/ ONTIME ({ontime_percentage}%):\n\n" if ontime_percentage else "1/ ONTIME:\n\n"
                 for task in completed:
                     if task:
-                        message += f"- {task}\n"
+                        task_name, timeline, is_done, _ = parse_task_with_timeline(task)
+                        # Nếu task đã có format "Task ---> T2", giữ nguyên format
+                        if '--->' in task:
+                            if timeline:
+                                if is_done:
+                                    formatted_task = f"{task_name} ---> {timeline} Done"
+                                else:
+                                    formatted_task = f"{task_name} ---> {timeline}"
+                            else:
+                                formatted_task = f"{task_name} ---> Done" if is_done else task_name
+                        else:
+                            # Nếu task không có format timeline, hiển thị nguyên task
+                            formatted_task = task
+                        message += f"   - {formatted_task}\n"
                 message += "\n"
             else:
-                message += "### ✅ COMPLETED: N/A\n\n"
+                message += f"1/ ONTIME ({ontime_percentage}%):\n\n" if ontime_percentage else "1/ ONTIME:\n\n"
             
-            # In progress tasks
-            in_progress = project.get('inProgressTasks', [])
-            if isinstance(in_progress, str):
-                in_progress = [t.strip() for t in in_progress.split('\n') if t.strip()]
-            
-            if in_progress:
-                message += "### 🔄 IN PROGRESS:\n"
-                for task in in_progress:
-                    if task:
-                        message += f"- {task}\n"
-                message += "\n"
-            else:
-                message += "### 🔄 IN PROGRESS: N/A\n\n"
-            
-            # Planned tasks
+            # 2/ NEXT TARGET - từ plannedTasks
             planned = project.get('plannedTasks', [])
             if isinstance(planned, str):
                 planned = [t.strip() for t in planned.split('\n') if t.strip()]
             
+            # Lấy phần trăm NEXT TARGET từ project
+            next_target_percentage = project.get('nextTargetPercentage', '')
+            if not next_target_percentage and planned:
+                next_target_percentage = ''
+            
             if planned:
-                message += "### 📋 PLANNED:\n"
+                message += f"2/ NEXT TARGET ({next_target_percentage}%):\n\n" if next_target_percentage else "2/ NEXT TARGET:\n\n"
                 for task in planned:
                     if task:
-                        message += f"- {task}\n"
+                        task_name, timeline, _, _ = parse_task_with_timeline(task)
+                        # Nếu task đã có format "Task ---> T2", giữ nguyên format
+                        if '--->' in task:
+                            if timeline:
+                                formatted_task = f"{task_name} ---> {timeline}"
+                            else:
+                                formatted_task = task_name
+                        else:
+                            # Nếu task không có format timeline, hiển thị nguyên task
+                            formatted_task = task
+                        message += f"   - {formatted_task}\n"
                 message += "\n"
             else:
-                message += "### 📋 PLANNED: N/A\n\n"
+                message += f"2/ NEXT TARGET ({next_target_percentage}%):\n\n" if next_target_percentage else "2/ NEXT TARGET:\n\n"
             
-            # Notes
+            # 3/ NOTE / ISSUES - từ notes
             notes = project.get('notes', '')
             if notes and notes.strip():
-                message += f"### 📝 NOTES / BLOCKERS:\n{notes.strip()}\n\n"
+                message += "3/ NOTE / ISSUES:\n\n"
+                # Format notes, giữ nguyên format nếu có timeline
+                note_lines = notes.strip().split('\n')
+                for note_line in note_lines:
+                    if note_line.strip():
+                        message += f"   - {note_line.strip()}\n"
+                message += "\n"
             else:
-                message += "### 📝 NOTES / BLOCKERS: N/A\n\n"
+                message += "3/ NOTE / ISSUES:\n\n"
+            
+            # 4/ LATED - từ inProgressTasks hoặc latedTasks
+            lated = project.get('latedTasks', [])
+            if not lated:
+                # Fallback: kiểm tra inProgressTasks có chứa late info không
+                in_progress = project.get('inProgressTasks', [])
+                if isinstance(in_progress, str):
+                    in_progress = [t.strip() for t in in_progress.split('\n') if t.strip()]
+                
+                # Lọc các task có late info
+                lated = []
+                for task in in_progress:
+                    _, _, _, late_info = parse_task_with_timeline(task)
+                    if late_info:
+                        lated.append(task)
+            
+            if isinstance(lated, str):
+                lated = [t.strip() for t in lated.split('\n') if t.strip()]
+            
+            if lated:
+                message += "4/ LATED:\n\n"
+                for task in lated:
+                    if task:
+                        task_name, timeline, _, late_info = parse_task_with_timeline(task)
+                        # Nếu task đã có format "Task ---> T3 (Late: ...)", giữ nguyên format
+                        if '--->' in task:
+                            if timeline and late_info:
+                                formatted_task = f"{task_name} ---> {timeline} ({late_info})"
+                            elif timeline:
+                                formatted_task = f"{task_name} ---> {timeline}"
+                            else:
+                                formatted_task = task_name
+                        else:
+                            # Nếu task không có format timeline, hiển thị nguyên task
+                            formatted_task = task
+                        message += f"   - {formatted_task}\n"
+                message += "\n"
+            else:
+                message += "4/ LATED:\n\n"
     else:
         # Backward compatibility với format cũ
         completed = report.get('completedTasks', [])
