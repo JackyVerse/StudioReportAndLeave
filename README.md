@@ -177,6 +177,39 @@ MIT License
 
 Mọi đóng góp đều được chào đón! Hãy tạo issue hoặc pull request.
 
+### 🔁 Chuẩn Commit Message (Conventional Commits)
+
+Áp dụng format: `type(scope?): short description`
+
+#### Các `type` nên dùng
+
+| Type  | Khi sử dụng                                                                    |
+|-------|---------------------------------------------------------------------------------|
+| `feat`| Thêm/chỉnh sửa tính năng (ví dụ đổi format report, thêm trường mới)             |
+| `fix` | Sửa bug, lỗi logic                                                              |
+| `docs`| Chỉnh README, guide, comment                                                    |
+| `style`| Chỉ đổi định dạng (lint, indent)                                               |
+| `refactor`| Tái cấu trúc code không đổi behavior                                         |
+| `test`| Thêm/chỉnh test                                                                 |
+| `chore`| Việc meta: cập nhật deps, config build, scripts                                |
+
+#### Quy tắc nhanh
+
+1. **Tiếng Anh, hiện tại**, <= 72 ký tự
+2. Không viết hoa chữ cái đầu mô tả sau dấu `:` (trừ danh từ riêng)
+3. Có thể thêm `scope` trong ngoặc để chỉ phần ảnh hưởng (`feat(report): bold headers`)
+4. Dùng body khi cần mô tả lý do/ảnh hưởng (mỗi dòng <= 72 ký tự)
+
+Ví dụ:
+```
+feat(report): support bold weekly headers
+
+fix: handle empty planned tasks crash
+docs: add commit guidelines section
+```
+
+Lợi ích: changelog / release tự động dễ phân loại, review nhanh, CI dễ trigger.
+
 ## 📞 Hỗ trợ
 
 Nếu có vấn đề, hãy tạo issue trên GitHub repo.
