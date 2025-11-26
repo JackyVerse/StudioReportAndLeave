@@ -22,6 +22,12 @@ python3 server.py
 # Hoặc sử dụng script
 ./start.sh
 ```
+
+Mỗi dự án trong form Weekly Report có thêm 2 trường:
+
+- **Scope of work**: mô tả nhanh phase/phạm vi công việc tuần đó (hiển thị nguyên văn ngay dưới tên dự án trong report).
+- **WBS**: link hoặc ghi chú đi kèm (WBS, doc planning...) – hiển thị ngay sau Scope nếu có.
+
 Server sẽ tự động mở trình duyệt tại `http://localhost:8989`
 
 #### Cách 2: Mở trực tiếp file HTML
@@ -118,24 +124,26 @@ WeeklyDeliveryDiscordChannel/
 Report được format với cấu trúc:
 
 ```
-📊 WEEKLY REPORT - TUẦN X/YEAR
+----
+TEAM - WEEKLY REPORT
+DD/MM - DD/MM
 
-📅 Thời gian: DD/MM/YYYY - DD/MM/YYYY
+🎮 **GAME-001 - Project name**
+*Scope:* Finetune phase
+*WBS:* https://example.com/wbs
 
-✅ ĐÃ HOÀN THÀNH:
-- Task 1
-- Task 2
+**1/ ONTIME (4) - 30% % thực tế đã xong:**
+• Task A ---> T2 Done (Hoàn thành như commit đầu tuần)
+• Task B ---> T3 Done (Hoàn thành bổ sung)
 
-🔄 ĐANG THỰC HIỆN:
-- Task 1
-- Task 2
+**2/ NEXT TARGET (3) - 50% % dự định hoàn thành:**
+• Task C ---> T2
+• Task D ---> T3
+• Task E ---> T4
 
-📋 DỰ KIẾN:
-- Task 1
-- Task 2
-
-📝 GHI CHÚ / BLOCKERS:
-...
+**3/ NOTE (2):**
+• Delivery Planning (GDD) ---> Tuần 4, Tháng 11
+• Flow game trong doc chưa clear...
 ```
 
 ## 🔧 Tùy chỉnh

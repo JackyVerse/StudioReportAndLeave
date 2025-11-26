@@ -6,30 +6,27 @@
   "projects": [
     {
       "name": "Dự án 1",
+      "scopeOfWork": "Mô tả phạm vi công việc/phase trong tuần",
+      "wbs": "Link WBS hoặc ghi chú bổ sung",
       "completedTasks": [
-        "Hoàn thành task 1",
-        "Hoàn thành task 2"
-      ],
-      "inProgressTasks": [
-        "Đang làm task 1",
-        "Đang làm task 2"
+        "Task A ---> T2 Done",
+        "Task B ---> T3 Done"
       ],
       "plannedTasks": [
-        "Dự kiến làm task 1",
-        "Dự kiến làm task 2"
+        "Task C ---> T4",
+        "Task D ---> T5"
       ],
       "notes": "Ghi chú cho dự án 1..."
     },
     {
       "name": "Dự án 2",
+      "scopeOfWork": "Mô tả phạm vi công việc/phase trong tuần",
+      "wbs": "Link WBS hoặc ghi chú bổ sung",
       "completedTasks": [
-        "Hoàn thành task 1"
-      ],
-      "inProgressTasks": [
-        "Đang làm task 1"
+        "Task A ---> T2 Done"
       ],
       "plannedTasks": [
-        "Dự kiến làm task 1"
+        "Task B ---> T3"
       ],
       "notes": "Ghi chú cho dự án 2..."
     }

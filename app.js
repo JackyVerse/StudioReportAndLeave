@@ -813,12 +813,11 @@ function editReport(id, event) {
             }
             if (projectNameInput) projectNameInput.value = projectNameValue;
             
+            cardElement.querySelector('.project-scope').value = project.scopeOfWork || '';
+            cardElement.querySelector('.project-wbs').value = project.wbs || '';
             cardElement.querySelector('.project-completed').value = Array.isArray(project.completedTasks) 
                 ? project.completedTasks.join('\n') 
                 : (project.completedTasks || '');
-            cardElement.querySelector('.project-in-progress').value = Array.isArray(project.inProgressTasks) 
-                ? project.inProgressTasks.join('\n') 
-                : (project.inProgressTasks || '');
             cardElement.querySelector('.project-planned').value = Array.isArray(project.plannedTasks) 
                 ? project.plannedTasks.join('\n') 
                 : (project.plannedTasks || '');
@@ -953,9 +952,9 @@ function getProjectsData() {
         // Bỏ qua project chưa có cả ID và Name
         if (!projectId && !projectName) return;
         
+        const scopeOfWork = card.querySelector('.project-scope').value.trim();
+        const wbs = card.querySelector('.project-wbs').value.trim();
         const completed = card.querySelector('.project-completed').value
-            .split('\n').filter(t => t.trim());
-        const inProgress = card.querySelector('.project-in-progress').value
             .split('\n').filter(t => t.trim());
         const planned = card.querySelector('.project-planned').value
             .split('\n').filter(t => t.trim());
@@ -965,8 +964,9 @@ function getProjectsData() {
             projectId: projectId,
             projectName: projectName,
             name: formatProjectDisplayName(projectId, projectName), // Giữ tương thích với format cũ
+            scopeOfWork: scopeOfWork,
+            wbs: wbs,
             completedTasks: completed,
-            inProgressTasks: inProgress,
             plannedTasks: planned,
             notes: notes
         });
@@ -975,58 +975,43 @@ function getProjectsData() {
     return projects;
 }
 
-// Parse task để tách task name và timeline (nếu có)
-function parseTaskWithTimeline(task) {
-    task = task.trim();
-    if (!task) {
-        return { taskName: task, timeline: null, isDone: false, lateInfo: null };
+function normalizeTaskList(raw) {
+    if (!raw) return [];
+    if (Array.isArray(raw)) {
+        return raw
+            .map(item => (typeof item === 'string' ? item.trim() : item))
+            .filter(item => typeof item === 'string' ? item.length > 0 : !!item);
     }
-    
-    // Kiểm tra format "Task ---> T2 Done" hoặc "Task ---> T2"
-    if (task.includes('--->')) {
-        const parts = task.split('--->');
-        const taskName = parts[0].trim();
-        let timelinePart = parts[1] ? parts[1].trim() : '';
-        
-        // Kiểm tra late info trước: "Task ---> T3 (Late: 20% - Do thiếu asset)"
-        let lateInfo = null;
-        let timeline = timelinePart;
-        if (timelinePart.includes('(') && timelinePart.includes('Late:')) {
-            const lateStart = timelinePart.indexOf('(');
-            const lateEnd = timelinePart.indexOf(')', lateStart);
-            if (lateEnd > lateStart) {
-                lateInfo = timelinePart.substring(lateStart + 1, lateEnd);
-                timeline = timelinePart.substring(0, lateStart).trim();
-            }
-        }
-        
-        // Kiểm tra Done sau khi đã tách late info
-        const isDone = timeline.includes('Done') || timeline.includes('done');
-        if (isDone) {
-            timeline = timeline.replace(/Done/gi, '').trim();
-        }
-        
-        return { taskName, timeline, isDone, lateInfo };
+    if (typeof raw === 'string') {
+        return raw
+            .split('\n')
+            .map(item => item.trim())
+            .filter(item => item.length > 0);
     }
-    
-    return { taskName: task, timeline: null, isDone: false, lateInfo: null };
+    return [];
 }
 
-// Format report để hiển thị (theo từng dự án)
-function formatReport(report) {
-    let formatted = `📊 **WEEKLY REPORT - WEEK ${report.weekNumber}/${report.year}**\n\n`;
-    
-    // Hiển thị Team Name nếu có
-    if (report.teamName && report.teamName.trim()) {
-        formatted += `👥 **Team:** ${report.teamName.trim()}\n\n`;
+function formatWeeklyBulletList(items) {
+    const normalized = normalizeTaskList(items);
+    if (normalized.length === 0) {
+        return '• N/A';
     }
+    return normalized.map(item => `• ${item}`).join('\n');
+}
+
+// Format report để hiển thị (theo format mới)
+function formatReport(report) {
+    const teamLabel = report.teamName && report.teamName.trim()
+        ? `${report.teamName.trim()} - WEEKLY REPORT`
+        : 'TEAM - WEEKLY REPORT';
+    const periodShort = `${formatDateDM(report.startDate)} - ${formatDateDM(report.endDate)}`;
     
-    formatted += `📅 **Period:** ${formatDate(report.startDate)} - ${formatDate(report.endDate)}\n\n`;
+    let formatted = `----\n${teamLabel}\n${periodShort}\n\n`;
     
-    // Format theo từng dự án (format mới)
     if (report.projects && report.projects.length > 0) {
         report.projects.forEach((project, index) => {
-            // Lấy project ID và Name
+            if (index > 0) formatted += '\n';
+            
             const projectId = project.projectId || '';
             const projectName = project.projectName || '';
             let displayName = '';
@@ -1041,152 +1026,43 @@ function formatReport(report) {
                 displayName = project.name || 'Unnamed Project';
             }
             
-            // Format mới: 🎮 Project name
-            formatted += `🎮 ${displayName}\n\n`;
-            formatted += `== Scope of work ==\n\n`;
+            formatted += `🎮 **${displayName}**\n\n`;
             
-            // 1/ ONTIME - từ completedTasks
-            const completed = project.completedTasks || [];
-            const ontimePercentage = project.ontimePercentage || '';
-            
-            if (completed.length > 0) {
-                formatted += ontimePercentage ? `1/ ONTIME (${ontimePercentage}%):\n\n` : `1/ ONTIME:\n\n`;
-                completed.forEach(task => {
-                    if (task) {
-                        const parsed = parseTaskWithTimeline(task);
-                        let formattedTask = task;
-                        if (task.includes('--->')) {
-                            if (parsed.timeline) {
-                                if (parsed.isDone) {
-                                    formattedTask = `${parsed.taskName} ---> ${parsed.timeline} Done`;
-                                } else {
-                                    formattedTask = `${parsed.taskName} ---> ${parsed.timeline}`;
-                                }
-                            } else {
-                                formattedTask = parsed.isDone ? `${parsed.taskName} ---> Done` : `${parsed.taskName}`;
-                            }
-                        }
-                        formatted += `   - ${formattedTask}\n`;
-                    }
-                });
-                formatted += `\n`;
-            } else {
-                formatted += ontimePercentage ? `1/ ONTIME (${ontimePercentage}%):\n\n` : `1/ ONTIME:\n\n`;
+            const scope = project.scopeOfWork && project.scopeOfWork.trim();
+            if (scope) {
+                formatted += `*Scope:* ${scope}\n`;
             }
             
-            // 2/ NEXT TARGET - từ plannedTasks
-            const planned = project.plannedTasks || [];
-            const nextTargetPercentage = project.nextTargetPercentage || '';
-            
-            if (planned.length > 0) {
-                formatted += nextTargetPercentage ? `2/ NEXT TARGET (${nextTargetPercentage}%):\n\n` : `2/ NEXT TARGET:\n\n`;
-                planned.forEach(task => {
-                    if (task) {
-                        const parsed = parseTaskWithTimeline(task);
-                        let formattedTask = task;
-                        if (task.includes('--->')) {
-                            if (parsed.timeline) {
-                                formattedTask = `${parsed.taskName} ---> ${parsed.timeline}`;
-                            } else {
-                                formattedTask = `${parsed.taskName}`;
-                            }
-                        }
-                        formatted += `   - ${formattedTask}\n`;
-                    }
-                });
-                formatted += `\n`;
-            } else {
-                formatted += nextTargetPercentage ? `2/ NEXT TARGET (${nextTargetPercentage}%):\n\n` : `2/ NEXT TARGET:\n\n`;
+            const wbs = project.wbs && project.wbs.trim();
+            if (wbs) {
+                formatted += `*WBS:* ${wbs}\n`;
             }
             
-            // 3/ NOTE / ISSUES - từ notes
-            const notes = project.notes || '';
-            if (notes && notes.trim()) {
-                formatted += `3/ NOTE / ISSUES:\n\n`;
-                const noteLines = notes.trim().split('\n');
-                noteLines.forEach(line => {
-                    if (line.trim()) {
-                        formatted += `   - ${line.trim()}\n`;
-                    }
-                });
-                formatted += `\n`;
-            } else {
-                formatted += `3/ NOTE / ISSUES:\n\n`;
+            if (scope || wbs) {
+                formatted += '\n';
             }
             
-            // 4/ LATED - từ latedTasks hoặc inProgressTasks có late info
-            let lated = project.latedTasks || [];
-            if (lated.length === 0) {
-                // Fallback: kiểm tra inProgressTasks có chứa late info không
-                const inProgress = project.inProgressTasks || [];
-                lated = inProgress.filter(task => {
-                    if (!task) return false;
-                    const parsed = parseTaskWithTimeline(task);
-                    return parsed.lateInfo !== null;
-                });
-            }
+            const completed = normalizeTaskList(project.completedTasks);
+            const planned = normalizeTaskList(project.plannedTasks);
+            const notesList = normalizeTaskList(project.notes);
             
-            if (lated.length > 0) {
-                formatted += `4/ LATED:\n\n`;
-                lated.forEach(task => {
-                    if (task) {
-                        const parsed = parseTaskWithTimeline(task);
-                        let formattedTask = task;
-                        if (task.includes('--->')) {
-                            if (parsed.timeline && parsed.lateInfo) {
-                                formattedTask = `${parsed.taskName} ---> ${parsed.timeline} (${parsed.lateInfo})`;
-                            } else if (parsed.timeline) {
-                                formattedTask = `${parsed.taskName} ---> ${parsed.timeline}`;
-                            } else {
-                                formattedTask = `${parsed.taskName}`;
-                            }
-                        }
-                        formatted += `   - ${formattedTask}\n`;
-                    }
-                });
-                formatted += `\n`;
-            } else {
-                formatted += `4/ LATED:\n\n`;
-            }
+            const ontimePercentage = project.ontimePercentage ? ` - ${project.ontimePercentage}% % thực tế đã xong` : '';
+            const nextTargetPercentage = project.nextTargetPercentage ? ` - ${project.nextTargetPercentage}% % dự định hoàn thành` : '';
+            
+            formatted += `**1/ ONTIME (${completed.length})${ontimePercentage}:**\n\n`;
+            formatted += `${formatWeeklyBulletList(completed)}\n\n`;
+            
+            formatted += `**2/ NEXT TARGET (${planned.length})${nextTargetPercentage}:**\n\n`;
+            formatted += `${formatWeeklyBulletList(planned)}\n\n`;
+            
+            formatted += `**3/ NOTE (${notesList.length}):**\n\n`;
+            formatted += `${formatWeeklyBulletList(notesList)}\n`;
         });
     } else {
-        // Backward compatibility với format cũ
-        const completed = report.completedTasks || [];
-        const inProgress = report.inProgressTasks || [];
-        const planned = report.plannedTasks || [];
-        
-        if (completed.length > 0) {
-            formatted += `✅ **COMPLETED:**\n`;
-            completed.forEach(task => formatted += `  • ${task}\n`);
-            formatted += `\n`;
-        } else {
-            formatted += `✅ **COMPLETED:** N/A\n\n`;
-        }
-        
-        if (inProgress.length > 0) {
-            formatted += `🔄 **IN PROGRESS:**\n`;
-            inProgress.forEach(task => formatted += `  • ${task}\n`);
-            formatted += `\n`;
-        } else {
-            formatted += `🔄 **IN PROGRESS:** N/A\n\n`;
-        }
-        
-        if (planned.length > 0) {
-            formatted += `📋 **PLANNED:**\n`;
-            planned.forEach(task => formatted += `  • ${task}\n`);
-            formatted += `\n`;
-        } else {
-            formatted += `📋 **PLANNED:** N/A\n\n`;
-        }
-        
-        if (report.notes && report.notes.trim()) {
-            formatted += `📝 **NOTES / BLOCKERS:**\n${report.notes.trim()}\n`;
-        } else {
-            formatted += `📝 **NOTES / BLOCKERS:** N/A\n`;
-        }
+        formatted += 'Chưa có dự án nào.\n';
     }
     
-    return formatted;
+    return formatted.trim();
 }
 
 // Format date từ YYYY-MM-DD sang DD/MM/YYYY

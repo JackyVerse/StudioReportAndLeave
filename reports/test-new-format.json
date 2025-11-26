@@ -8,6 +8,8 @@
     {
       "projectId": "GAME-001",
       "projectName": "RPG Adventure Game",
+      "scopeOfWork": "Xác định phase của dự án",
+      "wbs": "https://example.com/wbs/game-001",
       "ontimePercentage": "30",
       "nextTargetPercentage": "50",
       "completedTasks": [
@@ -19,14 +21,13 @@
         "Task D ---> T3",
         "Task E ---> T4"
       ],
-      "notes": "Delivery Planning (GDD) ---> Tuần 4, Tháng 11\n\nFlow game trong doc chưa clear...",
-      "latedTasks": [
-        "Task B ---> T3 (Late: 20% - Do thiếu asset)"
-      ]
+      "notes": "Delivery Planning (GDD) ---> Tuần 4, Tháng 11\nFlow game trong doc chưa clear..."
     },
     {
       "projectId": "GAME-002",
       "projectName": "Puzzle Game",
+      "scopeOfWork": "Ổn định core gameplay, tối ưu level design",
+      "wbs": "https://example.com/wbs/game-002",
       "ontimePercentage": "40",
       "nextTargetPercentage": "60",
       "completedTasks": [
@@ -38,10 +39,7 @@
         "Add sound effects ---> T3",
         "Polish UI ---> T4"
       ],
-      "notes": "Cần review từ game designer",
-      "inProgressTasks": [
-        "Bug fixing ---> T2 (Late: 15% - Do conflict với hệ thống cũ)"
-      ]
+      "notes": "Cần review từ game designer"
     }
   ]
 }
