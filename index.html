@@ -228,6 +228,29 @@
                 </div>
                 <button type="button" class="btn-remove-project" title="Remove project">🗑️</button>
             </div>
+            <div class="form-group">
+                <label>📊 STATUS:</label>
+                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px;">
+                    <div>
+                        <label style="font-size: 0.9em; color: var(--text-secondary);">Overall Progress (%)</label>
+                        <input type="number" class="daily-overall-progress" min="0" max="100"
+                               placeholder="62"
+                               style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.9em; color: var(--text-secondary);">Today Progress</label>
+                        <input type="text" class="daily-today-progress"
+                               placeholder="+5%"
+                               style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                    </div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <label style="font-size: 0.9em; color: var(--text-secondary);">Phase</label>
+                    <input type="text" class="daily-phase"
+                           placeholder="VD: Finetune 2"
+                           style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); margin-top: 8px;">
+                </div>
+            </div>
             <div class="project-content">
                 <div class="form-group">
                     <label>✅ DONE:</label>

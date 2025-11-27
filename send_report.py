@@ -122,6 +122,22 @@ def format_daily_report_for_discord(report: Dict[str, Any]) -> str:
             message += f"📁 **PROJECT:** {display_name}\n"
             message += f"📅 **DATE:** {date_formatted}\n\n"
             
+            overall_progress = (project.get('overallProgress') or '').strip()
+            today_progress = (project.get('todayProgress') or '').strip()
+            phase = (project.get('phase') or '').strip()
+            
+            if overall_progress or today_progress or phase:
+                message += "📊 STATUS:\n"
+                if overall_progress:
+                    overall_display = overall_progress if overall_progress.endswith('%') else f"{overall_progress}%"
+                    message += f"• Overall Progress: {overall_display}\n"
+                if today_progress:
+                    today_display = today_progress if today_progress.endswith('%') else f"{today_progress}%"
+                    message += f"• Today Progress: {today_display}\n"
+                if phase:
+                    message += f"• Phase: {phase}\n"
+                message += "\n"
+            
             # DONE
             done = project.get('done', [])
             done_count = len(done) if done else 0

@@ -210,6 +210,11 @@ docs: add commit guidelines section
 
 Lợi ích: changelog / release tự động dễ phân loại, review nhanh, CI dễ trigger.
 
+Tham khảo thêm:
+- [Conventional Commits](https://www.conventionalcommits.org/)
+- [Angular Commit Guidelines](https://github.com/angular/angular/blob/main/CONTRIBUTING.md#commit)
+- [Semantic Release](https://semantic-release.gitbook.io/semantic-release/)
+
 ## 📞 Hỗ trợ
 
 Nếu có vấn đề, hãy tạo issue trên GitHub repo.

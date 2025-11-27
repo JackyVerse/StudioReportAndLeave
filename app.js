@@ -1557,6 +1557,9 @@ function getDailyProjectsData() {
         const remaining = card.querySelector('.daily-project-remaining').value
             .split('\n').filter(t => t.trim());
         const note = card.querySelector('.daily-project-note').value.trim();
+        const overallProgress = card.querySelector('.daily-overall-progress').value.trim();
+        const todayProgress = card.querySelector('.daily-today-progress').value.trim();
+        const phase = card.querySelector('.daily-phase').value.trim();
         
         projects.push({
             projectId: projectId,
@@ -1564,7 +1567,10 @@ function getDailyProjectsData() {
             done: done,
             inProgress: inProgress,
             remaining: remaining,
-            note: note
+            note: note,
+            overallProgress: overallProgress,
+            todayProgress: todayProgress,
+            phase: phase
         });
     });
     
@@ -1591,6 +1597,26 @@ function formatDailyReport(report) {
             // Project header with improved format - cleaner and easier to read
             formatted += `📁 **PROJECT:** ${projectDisplay}\n`;
             formatted += `📅 **DATE:** ${dateFormatted}\n\n`;
+            
+            const overallProgress = project.overallProgress && project.overallProgress.trim();
+            const todayProgress = project.todayProgress && project.todayProgress.trim();
+            const phase = project.phase && project.phase.trim();
+            
+            if (overallProgress || todayProgress || phase) {
+                formatted += `📊 STATUS:\n`;
+                if (overallProgress) {
+                    const overallDisplay = overallProgress.endsWith('%') ? overallProgress : `${overallProgress}%`;
+                    formatted += `   • Overall Progress: ${overallDisplay}\n`;
+                }
+                if (todayProgress) {
+                    const todayDisplay = todayProgress.endsWith('%') ? todayProgress : `${todayProgress}%`;
+                    formatted += `   • Today Progress: ${todayDisplay}\n`;
+                }
+                if (phase) {
+                    formatted += `   • Phase: ${phase}\n`;
+                }
+                formatted += '\n';
+            }
             
             // DONE
             const doneCount = project.done ? project.done.length : 0;
