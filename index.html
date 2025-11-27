@@ -278,6 +278,26 @@
                               placeholder="VD: Đính kèm link WBS hoặc ghi chú liên quan..."></textarea>
                 </div>
                 <div class="form-group">
+                    <label>📊 PROJECT STATUS:</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+                        <div>
+                            <label style="font-size: 0.9em; color: var(--text-secondary);">Current Progress (%)</label>
+                            <input type="number" class="project-current-progress" min="0" max="100" 
+                                   placeholder="62" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.9em; color: var(--text-secondary);">Estimated Next Progress (%)</label>
+                            <input type="number" class="project-estimated-progress" min="0" max="100" 
+                                   placeholder="75" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label style="font-size: 0.9em; color: var(--text-secondary);">Phase</label>
+                        <input type="text" class="project-phase" 
+                               placeholder="VD: Finetune 2" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); margin-top: 8px;">
+                    </div>
+                </div>
+                <div class="form-group">
                     <label>1/ ✅ ONTIME:</label>
                     <textarea class="project-completed" rows="4" 
                               placeholder="Nhập các task đã hoàn thành... (VD: Task A ---> T2 Done)"></textarea>

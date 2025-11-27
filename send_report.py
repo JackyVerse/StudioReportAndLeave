@@ -171,12 +171,10 @@ def format_weekly_report_for_discord(report: Dict[str, Any]) -> str:
     team_name = (report.get('teamName') or '').strip()
     
     lines: List[str] = []
-    lines.append("----")
     team_label = f"{team_name} - WEEKLY REPORT" if team_name else "TEAM - WEEKLY REPORT"
     period_label = f"{start_short or format_date(report.get('startDate', ''))} - {end_short or format_date(report.get('endDate', ''))}"
     lines.append(team_label)
     lines.append(period_label)
-    lines.append("")
     
     projects = report.get('projects', [])
     
@@ -197,8 +195,6 @@ def format_weekly_report_for_discord(report: Dict[str, Any]) -> str:
                 display_name = project.get('name', 'Unnamed Project')
             
             lines.append(f"🎮 **{display_name}**")
-            lines.append("")
-            
             scope = (project.get('scopeOfWork') or '').strip()
             if scope:
                 lines.append(f"*Scope:* {scope}")
@@ -207,37 +203,49 @@ def format_weekly_report_for_discord(report: Dict[str, Any]) -> str:
             if wbs:
                 lines.append(f"*WBS:* {wbs}")
             
-            if scope or wbs:
-                lines.append("")
+            # PROJECT STATUS block
+            current_progress = (project.get('currentProgress') or '').strip()
+            estimated_progress = (project.get('estimatedProgress') or '').strip()
+            phase = (project.get('phase') or '').strip()
+            
+            if current_progress or estimated_progress or phase:
+                lines.append("📊 **PROJECT STATUS**")
+                if current_progress:
+                    lines.append(f"- Current Progress: {current_progress}%")
+                if estimated_progress:
+                    lines.append(f"- Estimated Next Progress: {estimated_progress}%")
+                if phase:
+                    lines.append(f"- Phase: {phase}")
             
             completed = normalize_task_list(project.get('completedTasks'))
             planned = normalize_task_list(project.get('plannedTasks'))
             notes_list = normalize_task_list(project.get('notes'))
             
             ontime_percentage = project.get('ontimePercentage')
-            ontime_header = f"**1/ ONTIME ({len(completed)})"
+            ontime_header = f"\t**1/ ONTIME ({len(completed)})"
             if ontime_percentage:
                 ontime_header += f" - {ontime_percentage}% % thực tế đã xong"
             ontime_header += ":**"
             lines.append(ontime_header)
-            lines.append("")
-            lines.append(format_bullet_lines(completed))
-            lines.append("")
+            completed_formatted = format_bullet_lines(completed)
+            completed_indented = "\n".join(f"\t{line}" for line in completed_formatted.split("\n") if line.strip())
+            lines.append(completed_indented)
             
             next_target_percentage = project.get('nextTargetPercentage')
-            next_header = f"**2/ NEXT TARGET ({len(planned)})"
+            next_header = f"\t**2/ NEXT TARGET ({len(planned)})"
             if next_target_percentage:
                 next_header += f" - {next_target_percentage}% % dự định hoàn thành"
             next_header += ":**"
             lines.append(next_header)
-            lines.append("")
-            lines.append(format_bullet_lines(planned))
-            lines.append("")
+            planned_formatted = format_bullet_lines(planned)
+            planned_indented = "\n".join(f"\t{line}" for line in planned_formatted.split("\n") if line.strip())
+            lines.append(planned_indented)
             
-            notes_header = f"**3/ NOTE ({len(notes_list)}):**"
+            notes_header = f"\t**3/ NOTE ({len(notes_list)}):**"
             lines.append(notes_header)
-            lines.append("")
-            lines.append(format_bullet_lines(notes_list))
+            notes_formatted = format_bullet_lines(notes_list)
+            notes_indented = "\n".join(f"\t{line}" for line in notes_formatted.split("\n") if line.strip())
+            lines.append(notes_indented)
     else:
         lines.append("Chưa có dự án nào.")
     

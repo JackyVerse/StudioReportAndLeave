@@ -10,6 +10,9 @@
       "projectName": "RPG Adventure Game",
       "scopeOfWork": "Xác định phase của dự án",
       "wbs": "https://example.com/wbs/game-001",
+      "currentProgress": "62",
+      "estimatedProgress": "75",
+      "phase": "Finetune 2",
       "ontimePercentage": "30",
       "nextTargetPercentage": "50",
       "completedTasks": [
@@ -28,6 +31,9 @@
       "projectName": "Puzzle Game",
       "scopeOfWork": "Ổn định core gameplay, tối ưu level design",
       "wbs": "https://example.com/wbs/game-002",
+      "currentProgress": "45",
+      "estimatedProgress": "60",
+      "phase": "Alpha",
       "ontimePercentage": "40",
       "nextTargetPercentage": "60",
       "completedTasks": [

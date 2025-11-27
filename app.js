@@ -815,6 +815,9 @@ function editReport(id, event) {
             
             cardElement.querySelector('.project-scope').value = project.scopeOfWork || '';
             cardElement.querySelector('.project-wbs').value = project.wbs || '';
+            cardElement.querySelector('.project-current-progress').value = project.currentProgress || '';
+            cardElement.querySelector('.project-estimated-progress').value = project.estimatedProgress || '';
+            cardElement.querySelector('.project-phase').value = project.phase || '';
             cardElement.querySelector('.project-completed').value = Array.isArray(project.completedTasks) 
                 ? project.completedTasks.join('\n') 
                 : (project.completedTasks || '');
@@ -954,6 +957,9 @@ function getProjectsData() {
         
         const scopeOfWork = card.querySelector('.project-scope').value.trim();
         const wbs = card.querySelector('.project-wbs').value.trim();
+        const currentProgress = card.querySelector('.project-current-progress').value.trim();
+        const estimatedProgress = card.querySelector('.project-estimated-progress').value.trim();
+        const phase = card.querySelector('.project-phase').value.trim();
         const completed = card.querySelector('.project-completed').value
             .split('\n').filter(t => t.trim());
         const planned = card.querySelector('.project-planned').value
@@ -966,6 +972,9 @@ function getProjectsData() {
             name: formatProjectDisplayName(projectId, projectName), // Giữ tương thích với format cũ
             scopeOfWork: scopeOfWork,
             wbs: wbs,
+            currentProgress: currentProgress,
+            estimatedProgress: estimatedProgress,
+            phase: phase,
             completedTasks: completed,
             plannedTasks: planned,
             notes: notes
@@ -1006,7 +1015,7 @@ function formatReport(report) {
         : 'TEAM - WEEKLY REPORT';
     const periodShort = `${formatDateDM(report.startDate)} - ${formatDateDM(report.endDate)}`;
     
-    let formatted = `----\n${teamLabel}\n${periodShort}\n\n`;
+    let formatted = `${teamLabel}\n${periodShort}\n\n`;
     
     if (report.projects && report.projects.length > 0) {
         report.projects.forEach((project, index) => {
@@ -1026,7 +1035,7 @@ function formatReport(report) {
                 displayName = project.name || 'Unnamed Project';
             }
             
-            formatted += `🎮 **${displayName}**\n\n`;
+            formatted += `🎮 **${displayName}**\n`;
             
             const scope = project.scopeOfWork && project.scopeOfWork.trim();
             if (scope) {
@@ -1038,7 +1047,24 @@ function formatReport(report) {
                 formatted += `*WBS:* ${wbs}\n`;
             }
             
-            if (scope || wbs) {
+            // PROJECT STATUS block
+            const currentProgress = project.currentProgress && project.currentProgress.trim();
+            const estimatedProgress = project.estimatedProgress && project.estimatedProgress.trim();
+            const phase = project.phase && project.phase.trim();
+            
+            if (currentProgress || estimatedProgress || phase) {
+                formatted += '\n📊 **PROJECT STATUS**\n';
+                if (currentProgress) {
+                    formatted += `   • Current Progress: ${currentProgress}%\n`;
+                }
+                if (estimatedProgress) {
+                    formatted += `   • Estimated Next Progress: ${estimatedProgress}%\n`;
+                }
+                if (phase) {
+                    formatted += `   • Phase: ${phase}\n`;
+                }
+                formatted += '\n';
+            } else if (scope || wbs) {
                 formatted += '\n';
             }
             
@@ -1049,14 +1075,17 @@ function formatReport(report) {
             const ontimePercentage = project.ontimePercentage ? ` - ${project.ontimePercentage}% % thực tế đã xong` : '';
             const nextTargetPercentage = project.nextTargetPercentage ? ` - ${project.nextTargetPercentage}% % dự định hoàn thành` : '';
             
-            formatted += `**1/ ONTIME (${completed.length})${ontimePercentage}:**\n\n`;
-            formatted += `${formatWeeklyBulletList(completed)}\n\n`;
+            formatted += `**1/ ONTIME (${completed.length})${ontimePercentage}:**\n`;
+            const completedIndented = formatWeeklyBulletList(completed).split('\n').map(line => `   ${line}`).join('\n');
+            formatted += `${completedIndented}\n`;
             
-            formatted += `**2/ NEXT TARGET (${planned.length})${nextTargetPercentage}:**\n\n`;
-            formatted += `${formatWeeklyBulletList(planned)}\n\n`;
+            formatted += `**2/ NEXT TARGET (${planned.length})${nextTargetPercentage}:**\n`;
+            const plannedIndented = formatWeeklyBulletList(planned).split('\n').map(line => `   ${line}`).join('\n');
+            formatted += `${plannedIndented}\n`;
             
-            formatted += `**3/ NOTE (${notesList.length}):**\n\n`;
-            formatted += `${formatWeeklyBulletList(notesList)}\n`;
+            formatted += `**3/ NOTE (${notesList.length}):**\n`;
+            const notesIndented = formatWeeklyBulletList(notesList).split('\n').map(line => `   ${line}`).join('\n');
+            formatted += `${notesIndented}\n`;
         });
     } else {
         formatted += 'Chưa có dự án nào.\n';
