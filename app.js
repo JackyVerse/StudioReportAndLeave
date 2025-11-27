@@ -1597,7 +1597,7 @@ function formatDailyReport(report) {
             formatted += `✅ DONE: (${doneCount})\n`;
             if (doneCount > 0) {
                 project.done.forEach(task => {
-                    if (task) formatted += `- ${task}\n`;
+                    if (task) formatted += `   • ${task}\n`;
                 });
             }
             formatted += '\n';
@@ -1607,7 +1607,7 @@ function formatDailyReport(report) {
             formatted += `🔄 IN-PROGRESS: (${inProgressCount})\n`;
             if (inProgressCount > 0) {
                 project.inProgress.forEach(task => {
-                    if (task) formatted += `- ${task}\n`;
+                    if (task) formatted += `   • ${task}\n`;
                 });
             }
             formatted += '\n';
@@ -1617,17 +1617,21 @@ function formatDailyReport(report) {
             formatted += `📋 REMAINING: (${remainingCount})\n`;
             if (remainingCount > 0) {
                 project.remaining.forEach(task => {
-                    if (task) formatted += `- ${task}\n`;
+                    if (task) formatted += `   • ${task}\n`;
                 });
             }
             formatted += '\n';
             
             // NOTE
-            const noteCount = project.note && project.note.trim() ? 1 : 0;
+            const notesList = normalizeTaskList(project.note);
+            const noteCount = notesList.length;
             formatted += `📝 NOTE: (${noteCount})\n`;
-            if (noteCount > 0 && project.note && project.note.trim()) {
-                formatted += `${project.note.trim()}\n`;
+            if (noteCount > 0) {
+                notesList.forEach(note => {
+                    if (note) formatted += `   • ${note}\n`;
+                });
             }
+            formatted += '\n';
         });
     }
     
