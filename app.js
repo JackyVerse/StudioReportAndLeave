@@ -1008,26 +1008,6 @@ function formatWeeklyBulletList(items) {
     return normalized.map(item => `• ${item}`).join('\n');
 }
 
-function formatProgressDisplay(value) {
-    if (value === undefined || value === null) return '';
-    const raw = value.toString().trim();
-    if (!raw) return '';
-    
-    const numeric = parseFloat(raw.replace('%', ''));
-    if (isNaN(numeric)) {
-        return raw;
-    }
-    
-    const clamped = Math.max(0, Math.min(100, numeric));
-    const totalBlocks = 10;
-    const filled = Math.round((clamped / 100) * totalBlocks);
-    const empty = totalBlocks - filled;
-    const bar = `[${'█'.repeat(filled)}${'-'.repeat(empty)}]`;
-    
-    const suffix = raw.endsWith('%') ? raw : `${clamped}%`;
-    return `${bar} ${suffix}`;
-}
-
 // Format report để hiển thị (theo format mới)
 function formatReport(report) {
     const teamLabel = report.teamName && report.teamName.trim()
@@ -1075,10 +1055,10 @@ function formatReport(report) {
             if (currentProgress || estimatedProgress || phase) {
                 formatted += '\n📊 **PROJECT STATUS**\n';
                 if (currentProgress) {
-                    formatted += `   • Current Progress: ${formatProgressDisplay(currentProgress)}\n`;
+                    formatted += `   • Current Progress: ${currentProgress}%\n`;
                 }
                 if (estimatedProgress) {
-                    formatted += `   • Estimated Next Progress: ${formatProgressDisplay(estimatedProgress)}\n`;
+                    formatted += `   • Estimated Next Progress: ${estimatedProgress}%\n`;
                 }
                 if (phase) {
                     formatted += `   • Phase: ${phase}\n`;
@@ -1625,10 +1605,12 @@ function formatDailyReport(report) {
             if (overallProgress || todayProgress || phase) {
                 formatted += `📊 STATUS:\n`;
                 if (overallProgress) {
-                    formatted += `   • Overall Progress: ${formatProgressDisplay(overallProgress)}\n`;
+                    const overallDisplay = overallProgress.endsWith('%') ? overallProgress : `${overallProgress}%`;
+                    formatted += `   • Overall Progress: ${overallDisplay}\n`;
                 }
                 if (todayProgress) {
-                    formatted += `   • Today Progress: ${formatProgressDisplay(todayProgress)}\n`;
+                    const todayDisplay = todayProgress.endsWith('%') ? todayProgress : `${todayProgress}%`;
+                    formatted += `   • Today Progress: ${todayDisplay}\n`;
                 }
                 if (phase) {
                     formatted += `   • Phase: ${phase}\n`;

@@ -68,29 +68,6 @@ def format_bullet_lines(items) -> str:
     return "\n".join(f"• {item}" for item in normalized)
 
 
-def format_progress_bar(value: str) -> str:
-    """Format progress value thành progress bar dạng [███-----] 60%"""
-    if value is None:
-        return ""
-    raw = value.strip()
-    if not raw:
-        return ""
-    
-    try:
-        numeric = float(raw.replace('%', ''))
-    except ValueError:
-        return raw
-    
-    numeric = max(0.0, min(100.0, numeric))
-    total_blocks = 10
-    filled = round((numeric / 100.0) * total_blocks)
-    filled = min(total_blocks, max(0, filled))
-    empty = total_blocks - filled
-    bar = "[" + "█" * filled + "-" * empty + "]"
-    suffix = raw if raw.endswith('%') else f"{numeric:.0f}%"
-    return f"{bar} {suffix}"
-
-
 def format_report_for_discord(report: Dict[str, Any]) -> str:
     """Format report thành message Discord với markdown"""
     
@@ -152,9 +129,11 @@ def format_daily_report_for_discord(report: Dict[str, Any]) -> str:
             if overall_progress or today_progress or phase:
                 message += "📊 STATUS:\n"
                 if overall_progress:
-                    message += f"• Overall Progress: {format_progress_bar(overall_progress)}\n"
+                    overall_display = overall_progress if overall_progress.endswith('%') else f"{overall_progress}%"
+                    message += f"• Overall Progress: {overall_display}\n"
                 if today_progress:
-                    message += f"• Today Progress: {format_progress_bar(today_progress)}\n"
+                    today_display = today_progress if today_progress.endswith('%') else f"{today_progress}%"
+                    message += f"• Today Progress: {today_display}\n"
                 if phase:
                     message += f"• Phase: {phase}\n"
                 message += "\n"
@@ -248,12 +227,11 @@ def format_weekly_report_for_discord(report: Dict[str, Any]) -> str:
             if current_progress or estimated_progress or phase:
                 lines.append("📊 **PROJECT STATUS**")
                 if current_progress:
-                    lines.append(f"- Current Progress: {format_progress_bar(current_progress)}")
+                    lines.append(f"- Current Progress: {current_progress}%")
                 if estimated_progress:
-                    lines.append(f"- Estimated Next Progress: {format_progress_bar(estimated_progress)}")
+                    lines.append(f"- Estimated Next Progress: {estimated_progress}%")
                 if phase:
                     lines.append(f"- Phase: {phase}")
-                lines.append("")
             
             completed = normalize_task_list(project.get('completedTasks'))
             planned = normalize_task_list(project.get('plannedTasks'))
