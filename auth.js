@@ -1,7 +1,7 @@
 // ==================== GOOGLE AUTHENTICATION ====================
 
 const AUTH_KEY = 'user_auth';
-const ALLOWED_DOMAIN = 'seatudio.com';
+const ALLOWED_DOMAINS = ['seatudio.com', 'enotion.io'];
 const GOOGLE_CLIENT_ID = '799775549325-rkhjo4iculr5l3ftneo8va97jvdav5c5.apps.googleusercontent.com'; // Người dùng cần điền Google Client ID của mình
 
 // Kiểm tra user đã đăng nhập chưa
@@ -12,7 +12,7 @@ function isAuthenticated() {
     try {
         const user = JSON.parse(authData);
         // Kiểm tra email domain
-        if (user.email && user.email.endsWith(`@${ALLOWED_DOMAIN}`)) {
+        if (user.email && ALLOWED_DOMAINS.some(domain => user.email.endsWith(`@${domain}`))) {
             return true;
         }
     } catch (e) {}
@@ -47,8 +47,8 @@ function handleCredentialResponse(response) {
         const credential = JSON.parse(jsonPayload);
         
         // Kiểm tra email domain
-        if (!credential.email || !credential.email.endsWith(`@${ALLOWED_DOMAIN}`)) {
-            showLoginError('❌ Chỉ cho phép email có đuôi @seatudio.com');
+        if (!credential.email || !ALLOWED_DOMAINS.some(domain => credential.email.endsWith(`@${domain}`))) {
+            showLoginError(`❌ Chỉ cho phép email có đuôi @seatudio.com hoặc @enotion.io`);
             return;
         }
         

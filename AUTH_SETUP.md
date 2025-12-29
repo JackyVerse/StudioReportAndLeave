@@ -29,7 +29,7 @@
      - Click **Update** > **Save and Continue**
    - **Test users** (BẮT BUỘC nếu dùng External):
      - Click **Add Users**
-     - Thêm email của bạn (email có đuôi @seatudio.com)
+     - Thêm email của bạn (email có đuôi @seatudio.com hoặc @enotion.io)
      - Click **Add**
      - Click **Save and Continue**
    - **Summary**: Review lại và click **Back to Dashboard**
@@ -58,8 +58,8 @@ const GOOGLE_CLIENT_ID = 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com';
 
 ### 3. Lưu ý
 
-- **Domain restriction**: Hiện tại chỉ cho phép email có đuôi `@seatudio.com`
-- Để thay đổi domain được phép, sửa biến `ALLOWED_DOMAIN` trong `auth.js`
+- **Domain restriction**: Hiện tại chỉ cho phép email có đuôi `@seatudio.com` hoặc `@enotion.io`
+- Để thay đổi domain được phép, sửa biến `ALLOWED_DOMAINS` trong `auth.js`
 - Nếu dùng localhost, cần thêm `http://localhost:8000` vào Authorized JavaScript origins
 - Client ID là public, không cần giữ bí mật
 
@@ -69,7 +69,7 @@ const GOOGLE_CLIENT_ID = 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com';
 2. Mở trình duyệt: `http://localhost:8000`
 3. Bạn sẽ thấy màn hình đăng nhập
 4. Click "Sign in with Google"
-5. Chọn tài khoản Google có đuôi `@seatudio.com`
+5. Chọn tài khoản Google có đuôi `@seatudio.com` hoặc `@enotion.io`
 6. Nếu đăng nhập thành công, bạn sẽ vào được ứng dụng
 
 ### 5. Enable Google Identity Services API
@@ -101,7 +101,7 @@ Lỗi này thường do **OAuth consent screen chưa được cấu hình đúng
 2. **Nếu dùng External app, thêm Test Users**:
    - Vào OAuth consent screen > Test users
    - Click "Add Users"
-   - Thêm email của bạn (phải có đuôi @seatudio.com)
+   - Thêm email của bạn (phải có đuôi @seatudio.com hoặc @enotion.io)
    - Click "Add"
 
 3. **Kiểm tra Publishing status**:
@@ -154,6 +154,6 @@ Lỗi này thường xảy ra vì:
 
 #### Email không hợp lệ
 
-- Chỉ cho phép email có đuôi `@seatudio.com`
-- Nếu cần thay đổi, sửa `ALLOWED_DOMAIN` trong `auth.js`
+- Chỉ cho phép email có đuôi `@seatudio.com` hoặc `@enotion.io`
+- Nếu cần thay đổi, sửa `ALLOWED_DOMAINS` trong `auth.js`
 
