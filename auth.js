@@ -2,7 +2,7 @@
 
 const AUTH_KEY = 'user_auth';
 const ALLOWED_DOMAINS = ['seatudio.com', 'enotion.io'];
-const GOOGLE_CLIENT_ID = '799775549325-rkhjo4iculr5l3ftneo8va97jvdav5c5.apps.googleusercontent.com'; // Người dùng cần điền Google Client ID của mình
+const GOOGLE_CLIENT_ID = '313545200072-s64bksofr4a8j7kkum9i3lmvb5jva5su.apps.googleusercontent.com'; // Người dùng cần điền Google Client ID của mình
 
 // Kiểm tra user đã đăng nhập chưa
 function isAuthenticated() {
