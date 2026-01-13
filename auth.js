@@ -114,85 +114,98 @@ function logout() {
 
 // Khởi tạo authentication
 function initializeAuth() {
-    // TẠM THỜI: Bỏ qua authentication, cho phép vào thẳng trang chính
-    // TODO: Bật lại authentication khi cần
-    showMainApp();
-    return;
-    
-    // ========== CODE CŨ (ĐÃ TẮT TẠM THỜI) ==========
     // Kiểm tra nếu đã đăng nhập
-    // if (isAuthenticated()) {
-    //     showMainApp();
-    //     return;
-    // }
-    // 
-    // // Hiển thị login screen
-    // showLoginScreen();
-    // 
-    // // Kiểm tra và cấu hình Google Sign-In
-    // if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.trim() === '') {
-    //     // Hiển thị thông báo nếu chưa có Client ID
-    //     const errorDiv = document.getElementById('loginError');
-    //     if (errorDiv) {
-    //         errorDiv.innerHTML = '⚠️ Vui lòng cấu hình Google Client ID trong file auth.js (dòng 5)<br><br>Xem hướng dẫn trong file AUTH_SETUP.md';
-    //         errorDiv.style.display = 'block';
-    //     }
-    //     return;
-    // }
-    // 
-    // // Không dùng g_id_onload để tránh SDK đọc data-client_id trước khi JS thiết lập
-    // 
-    // // Khởi tạo Google Sign-In bằng JavaScript
-    // if (window.google && window.google.accounts) {
-    //     try {
-    //         
-    //         
-    //         // Khởi tạo với callback
-    //         window.google.accounts.id.initialize({
-    //             client_id: GOOGLE_CLIENT_ID,
-    //             callback: handleCredentialResponse,
-    //             auto_select: false,
-    //             cancel_on_tap_outside: true
-    //         });
-    //         
-    //         // Render button
-    //         const signInContainer = document.getElementById('g_id_signin');
-    //         if (signInContainer) {
-    //             // Clear container trước
-    //             signInContainer.innerHTML = '';
-    //             window.google.accounts.id.renderButton(
-    //                 signInContainer,
-    //                 {
-    //                     theme: 'outline',
-    //                     size: 'large',
-    //                     text: 'sign_in_with',
-    //                     shape: 'rectangular',
-    //                     logo_alignment: 'left',
-    //                     type: 'standard'
-    //                 }
-    //             );
-    //             
-    //         }
-    //     } catch (error) {
-    //         const errorDiv = document.getElementById('loginError');
-    //         if (errorDiv) {
-    //             errorDiv.innerHTML = `❌ Lỗi khởi tạo Google Sign-In: ${error.message}<br><br>Vui lòng kiểm tra:<br>1. Client ID đã đúng chưa<br>2. Đã enable Google Identity Services API chưa<br>3. Đã cấu hình OAuth consent screen chưa<br>4. Đã thêm test users chưa (nếu dùng External app)<br>5. Đã thêm authorized origins chưa`;
-    //             errorDiv.style.display = 'block';
-    //         }
-    //     }
-    // } else {
-    //     const errorDiv = document.getElementById('loginError');
-    //     if (errorDiv) {
-    //         errorDiv.innerHTML = '⚠️ Google Sign-In SDK chưa load. Vui lòng refresh trang.';
-    //         errorDiv.style.display = 'block';
-    //     }
-    // }
+    if (isAuthenticated()) {
+        showMainApp();
+        return;
+    }
+    
+    // Hiển thị login screen
+    showLoginScreen();
+    
+    // Kiểm tra và cấu hình Google Sign-In
+    if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.trim() === '') {
+        // Hiển thị thông báo nếu chưa có Client ID
+        const errorDiv = document.getElementById('loginError');
+        if (errorDiv) {
+            errorDiv.innerHTML = '⚠️ Vui lòng cấu hình Google Client ID trong file auth.js (dòng 5)<br><br>Xem hướng dẫn trong file AUTH_SETUP.md';
+            errorDiv.style.display = 'block';
+        }
+        return;
+    }
+    
+    // Không dùng g_id_onload để tránh SDK đọc data-client_id trước khi JS thiết lập
+    
+    // Khởi tạo Google Sign-In bằng JavaScript
+    if (window.google && window.google.accounts) {
+        try {
+            // Khởi tạo với callback
+            window.google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: handleCredentialResponse,
+                auto_select: false,
+                cancel_on_tap_outside: true
+            });
+            
+            // Render button
+            const signInContainer = document.getElementById('g_id_signin');
+            if (signInContainer) {
+                // Clear container trước
+                signInContainer.innerHTML = '';
+                window.google.accounts.id.renderButton(
+                    signInContainer,
+                    {
+                        theme: 'outline',
+                        size: 'large',
+                        text: 'sign_in_with',
+                        shape: 'rectangular',
+                        logo_alignment: 'left',
+                        type: 'standard'
+                    }
+                );
+            }
+        } catch (error) {
+            const errorDiv = document.getElementById('loginError');
+            if (errorDiv) {
+                errorDiv.innerHTML = `❌ Lỗi khởi tạo Google Sign-In: ${error.message}<br><br>Vui lòng kiểm tra:<br>1. Client ID đã đúng chưa<br>2. Đã enable Google Identity Services API chưa<br>3. Đã cấu hình OAuth consent screen chưa<br>4. Đã thêm test users chưa (nếu dùng External app)<br>5. Đã thêm authorized origins chưa`;
+                errorDiv.style.display = 'block';
+            }
+        }
+    } else {
+        const errorDiv = document.getElementById('loginError');
+        if (errorDiv) {
+            errorDiv.innerHTML = '⚠️ Google Sign-In SDK chưa load. Vui lòng refresh trang.';
+            errorDiv.style.display = 'block';
+        }
+    }
 }
 
-// Khởi tạo khi DOM ready (không cần đợi Google SDK vì đã tắt authentication)
+// Khởi tạo khi DOM ready và đợi Google SDK load
 function waitForGoogleSDK() {
-    // TẠM THỜI: Không cần đợi Google SDK, gọi initializeAuth() ngay
-    initializeAuth();
+    // Đợi Google SDK load
+    if (window.google && window.google.accounts) {
+        // SDK đã load, khởi tạo ngay
+        initializeAuth();
+    } else {
+        // Chờ SDK load (tối đa 10 giây)
+        let checkCount = 0;
+        const maxChecks = 100; // 10 giây (100 * 100ms)
+        const checkSDK = setInterval(() => {
+            checkCount++;
+            if (window.google && window.google.accounts) {
+                clearInterval(checkSDK);
+                initializeAuth();
+            } else if (checkCount >= maxChecks) {
+                // Timeout: hiển thị lỗi
+                clearInterval(checkSDK);
+                const errorDiv = document.getElementById('loginError');
+                if (errorDiv) {
+                    errorDiv.innerHTML = '⚠️ Google Sign-In SDK không thể load. Vui lòng kiểm tra kết nối internet và refresh trang.';
+                    errorDiv.style.display = 'block';
+                }
+            }
+        }, 100);
+    }
 }
 
 if (document.readyState === 'loading') {
