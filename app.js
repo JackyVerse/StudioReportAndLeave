@@ -1456,7 +1456,7 @@ function setDefaultDates() {
     // Lấy Thứ 2 của tuần hiện tại (tuần bắt đầu từ Thứ 2)
     const startDate = getMondayOfWeek(today);
     const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 6); // Thêm 6 ngày để có Chủ nhật
+    endDate.setDate(startDate.getDate() + 4); // Thêm 4 ngày để có Thứ 6
     
     // Kiểm tra xem tuần có rơi vào năm khác không (cuối tháng 12 có thể rơi vào tuần 1 năm sau)
     let displayYear = currentYear;
