@@ -97,7 +97,8 @@
     let sprites = [];
     let rafId = null;
     let audio = null;
-    let musicEnabled = false;
+    let musicEnabled = true;
+    let audioUnlocked = false;
 
     function updateMusicUI() {
         const fab = document.getElementById('musicFab');
@@ -112,6 +113,18 @@
         }
     }
 
+    async function tryPlayMusic() {
+        if (!audio || !musicEnabled) return false;
+        audio.volume = MUSIC_VOLUME;
+        try {
+            await audio.play();
+            audioUnlocked = true;
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
     async function setMusicEnabled(enabled) {
         musicEnabled = enabled;
         localStorage.setItem(MUSIC_KEY, enabled ? '1' : '0');
@@ -120,15 +133,26 @@
         if (!audio) return;
 
         if (enabled) {
-            audio.volume = MUSIC_VOLUME;
-            try {
-                await audio.play();
-            } catch {
-                // Trình duyệt chặn autoplay — cần click nút nhạc
-            }
+            await tryPlayMusic();
         } else {
             audio.pause();
         }
+    }
+
+    function bindAudioUnlock() {
+        const unlock = async () => {
+            if (!musicEnabled || audioUnlocked) return;
+            const played = await tryPlayMusic();
+            if (played) {
+                document.removeEventListener('click', unlock);
+                document.removeEventListener('keydown', unlock);
+                document.removeEventListener('touchstart', unlock);
+            }
+        };
+
+        document.addEventListener('click', unlock);
+        document.addEventListener('keydown', unlock);
+        document.addEventListener('touchstart', unlock, { passive: true });
     }
 
     function toggleMusic() {
@@ -172,7 +196,7 @@
 
     function initFunEffects() {
         audio = document.getElementById('bgMusic');
-        musicEnabled = localStorage.getItem(MUSIC_KEY) === '1';
+        musicEnabled = true;
         updateMusicUI();
 
         const fab = document.getElementById('musicFab');
@@ -189,10 +213,10 @@
 
         initSprites();
         window.addEventListener('resize', onResize);
+        bindAudioUnlock();
 
         if (musicEnabled && audio) {
-            audio.volume = MUSIC_VOLUME;
-            audio.play().catch(() => {});
+            tryPlayMusic();
         }
     }
 
