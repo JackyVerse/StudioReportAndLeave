@@ -8,6 +8,14 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+    <!-- Nhạc nền & meme bay lượn -->
+    <audio id="bgMusic" src="assets/sounds/Report.mp3" loop preload="auto"></audio>
+    <button type="button" id="musicFab" class="music-fab" title="Bật/tắt nhạc nền" aria-label="Bật tắt nhạc nền">🔇</button>
+    <div id="trollLayer" class="troll-layer" aria-hidden="true">
+        <img src="assets/images/sm1.jpg" alt="" class="troll-sprite" id="trollSm1" draggable="false">
+        <img src="assets/images/sm2.jpg" alt="" class="troll-sprite troll-sprite-alt" id="trollSm2" draggable="false">
+    </div>
+
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen" style="display: none;">
         <div class="login-container">
@@ -31,6 +39,11 @@
     
     <!-- Menu Dropdown -->
     <div class="menu-dropdown" id="menuDropdown" style="display: none;">
+        <div class="menu-item" id="toggleMusicBtn">
+            <span class="menu-icon">🎵</span>
+            <span class="menu-text" id="toggleMusicLabel">Nhạc nền: Tắt</span>
+        </div>
+        <div class="menu-divider"></div>
         <div class="menu-item" id="toggleThemeBtn">
             <span class="menu-icon">🌓</span>
             <span class="menu-text">Dark Mode</span>
@@ -451,6 +464,7 @@
     <div id="toastContainer" class="toast-container"></div>
     
     <script src="auth.js"></script>
+    <script src="fun-effects.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
