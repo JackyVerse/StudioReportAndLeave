@@ -1394,6 +1394,11 @@ function downloadReport() {
     URL.revokeObjectURL(url);
 }
 
+// Chuẩn hóa về 00:00 theo giờ địa phương (tránh lệch ngày khi dùng toISOString)
+function startOfLocalDay(date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
 // Tính số tuần ISO 8601 (tuần bắt đầu từ Thứ 2, tuần 1 là tuần có ngày 4/1)
 // Thuật toán chuẩn ISO 8601
 function getISOWeekNumber(date) {
@@ -1437,15 +1442,51 @@ function getISOWeekNumber(date) {
     return weekNumber;
 }
 
-// Lấy ngày Thứ 2 của tuần hiện tại
+// Lấy ngày Thứ 2 của tuần chứa date
 function getMondayOfWeek(date) {
-    const d = new Date(date);
+    const d = startOfLocalDay(date);
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Điều chỉnh: Thứ 2 = 1, CN = 0 -> -6
-    return new Date(d.setDate(diff));
+    d.setDate(diff);
+    return d;
 }
 
-// Set default dates (tuần này)
+// Lấy ngày Thứ 6 (cuối tuần làm việc) của tuần chứa date
+function getFridayOfWeek(date) {
+    const monday = getMondayOfWeek(date);
+    const friday = new Date(monday);
+    friday.setDate(monday.getDate() + 4);
+    return friday;
+}
+
+// Lấy khoảng Thứ 2 → Thứ 6 từ số tuần ISO và năm
+function getDatesForISOWeek(year, weekNumber) {
+    const jan4 = new Date(year, 0, 4);
+    let jan4DayOfWeek = jan4.getDay();
+    if (jan4DayOfWeek === 0) jan4DayOfWeek = 7;
+
+    const firstMonday = new Date(year, 0, 4 - jan4DayOfWeek + 1);
+    const monday = new Date(firstMonday);
+    monday.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
+
+    const friday = new Date(monday);
+    friday.setDate(monday.getDate() + 4);
+
+    return { startDate: monday, endDate: friday };
+}
+
+// Đồng bộ ngày bắt đầu/kết thúc khi đổi số tuần hoặc năm
+function syncWeeklyDatesFromWeekYear() {
+    const weekNumber = parseInt(document.getElementById('weekNumber').value, 10);
+    const year = parseInt(document.getElementById('year').value, 10);
+    if (!weekNumber || !year) return;
+
+    const { startDate, endDate } = getDatesForISOWeek(year, weekNumber);
+    document.getElementById('startDate').value = toLocalDateInput(startDate);
+    document.getElementById('endDate').value = toLocalDateInput(endDate);
+}
+
+// Set default dates (tuần này: Thứ 2 → Thứ 6)
 function setDefaultDates() {
     const today = new Date();
     const currentYear = today.getFullYear();
@@ -1453,10 +1494,8 @@ function setDefaultDates() {
     // Tính số tuần ISO
     const weekNumber = getISOWeekNumber(today);
     
-    // Lấy Thứ 2 của tuần hiện tại (tuần bắt đầu từ Thứ 2)
     const startDate = getMondayOfWeek(today);
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 4); // Thêm 4 ngày để có Thứ 6
+    const endDate = getFridayOfWeek(today);
     
     // Kiểm tra xem tuần có rơi vào năm khác không (cuối tháng 12 có thể rơi vào tuần 1 năm sau)
     let displayYear = currentYear;
@@ -1466,8 +1505,8 @@ function setDefaultDates() {
     
     document.getElementById('year').value = displayYear;
     document.getElementById('weekNumber').value = weekNumber;
-    document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
-    document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+    document.getElementById('startDate').value = toLocalDateInput(startDate);
+    document.getElementById('endDate').value = toLocalDateInput(endDate);
 }
 
 // ==================== DAILY REPORT FUNCTIONS ====================
@@ -1475,7 +1514,7 @@ function setDefaultDates() {
 // Set default date (hôm nay)
 function setDefaultDailyDate() {
     const today = new Date();
-    document.getElementById('dailyDate').value = today.toISOString().split('T')[0];
+    document.getElementById('dailyDate').value = toLocalDateInput(today);
 }
 
 // Format date cho daily report (DayTimeFormat: DD/MM/YYYY)
@@ -2193,6 +2232,8 @@ function initializeApp() {
     });
     
     // Weekly form event listeners
+    document.getElementById('weekNumber').addEventListener('change', syncWeeklyDatesFromWeekYear);
+    document.getElementById('year').addEventListener('change', syncWeeklyDatesFromWeekYear);
     document.getElementById('addProjectBtn').addEventListener('click', addProject);
     document.getElementById('projectSettingsBtn').addEventListener('click', openProjectSettingsModal);
     document.getElementById('previewBtn').addEventListener('click', previewReport);
