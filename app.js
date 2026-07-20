@@ -1622,7 +1622,7 @@ function formatDailyReport(report) {
     
     // Header: Team Name + DAILY REPORT
     const teamName = report.teamName && report.teamName.trim() ? report.teamName.trim() : 'N/A';
-    formatted += `==== ${teamName} DAILY REPORT ====\n\n`;
+    formatted += `${teamName} DAILY REPORT\n\n`;
     
     // Pre-compute date (used per-project below)
     const dateFormatted = formatDailyDate(report.date);

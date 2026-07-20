@@ -91,7 +91,7 @@ def format_daily_report_for_discord(report: Dict[str, Any]) -> str:
     else:
         team_name = team_name.strip()
     
-    message += f"==== {team_name} DAILY REPORT ====\n\n"
+    message += f"{team_name} DAILY REPORT\n\n"
     
     # Pre-compute date (used per-project below)
     date_str = report.get('date', '')
